@@ -1,0 +1,1675 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TERMINAL HACK CELL</title>
+    <!-- Fuente estilo hacker/consola -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <!-- Iconos -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        :root {
+            /* Variables de Tema Dinámico */
+            --bg-color: #020202; /* Negro más profundo */
+            --text-main: #e0e0e0;
+            --text-dim: #666;
+            --border-color: #333;
+            --highlight: #fff;
+            --accent: #00f3ff; /* Cian eléctrico */
+            --glow: 0 0 10px rgba(0, 243, 255, 0.4);
+            --font-stack: 'Share Tech Mono', monospace;
+            --panel-bg: rgba(8, 12, 16, 0.92);
+        }
+
+        /* Temas */
+        body.theme-green { --highlight: #aff; --accent: #0f0; --text-main: #cfc; --text-dim: #050; --glow: 0 0 10px rgba(0, 255, 0, 0.4); }
+        body.theme-amber { --highlight: #ffe; --accent: #fb0; --text-main: #fe9; --text-dim: #530; --glow: 0 0 10px rgba(255, 187, 0, 0.4); }
+        body.theme-red { --highlight: #faa; --accent: #f00; --text-main: #fcc; --text-dim: #500; --glow: 0 0 10px rgba(255, 0, 0, 0.4); }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent) var(--bg-color);
+        }
+
+        /* Scrollbars custom */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #050505; }
+        ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 2px; }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(circle at center, #111 0%, #000 120%);
+            color: var(--text-main);
+            font-family: var(--font-stack);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            font-size: 14px;
+            text-shadow: 0 0 2px rgba(0,0,0,0.5); /* Sombra base para legibilidad */
+        }
+
+        /* Efecto CRT Scanlines y Vignette (Mejorado) */
+        body::after {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: 
+                linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)),
+                radial-gradient(circle, rgba(0,0,0,0) 60%, rgba(0,0,0,0.6) 100%); /* Viñeta */
+            z-index: 900;
+            background-size: 100% 4px, 6px 100%, 100% 100%;
+            pointer-events: none;
+        }
+
+        /* Sutil parpadeo de monitor antiguo */
+        @keyframes crt-flicker {
+            0% { opacity: 0.97; }
+            5% { opacity: 0.95; }
+            10% { opacity: 0.97; }
+            100% { opacity: 0.97; }
+        }
+        
+        /* Overlay de Autodestrucción */
+        #destruct-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: red; opacity: 0; pointer-events: none; z-index: 3000;
+            mix-blend-mode: overlay;
+            transition: opacity 0.1s;
+        }
+        .alarm-active { animation: alarmFlash 0.5s infinite; }
+        @keyframes alarmFlash { 0% { opacity: 0; } 50% { opacity: 0.6; } 100% { opacity: 0; } }
+
+        /* --- LOGIN SCREEN --- */
+        #login-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #000;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        #login-matrix-canvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 0;
+            opacity: 0.3;
+        }
+
+        .login-container {
+            width: 90%; /* Adaptable */
+            max-width: 420px;
+            padding: 50px;
+            border: 1px solid var(--accent);
+            background: rgba(5, 10, 15, 0.95);
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.15), inset 0 0 50px rgba(0,0,0,0.8);
+            position: relative;
+            text-align: center;
+            backdrop-filter: blur(8px);
+            z-index: 10;
+        }
+        
+        /* Animación de Glitch para error */
+        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        .login-container::before {
+            content: "SECURE DATABASE ACCESS // LVL 4";
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #020202;
+            padding: 0 15px;
+            color: var(--accent);
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            border: 1px solid var(--accent);
+            text-shadow: var(--glow);
+            width: max-content;
+        }
+
+        .login-input {
+            width: 100%;
+            background: rgba(0,0,0,0.8);
+            border: 1px solid #333;
+            border-left: 2px solid var(--accent);
+            color: var(--highlight);
+            padding: 12px;
+            margin-bottom: 20px;
+            font-family: var(--font-stack);
+            font-size: 1.1rem;
+            outline: none;
+            transition: 0.3s;
+        }
+        .login-input:focus {
+            border-color: var(--highlight);
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+            background: rgba(0, 20, 30, 0.6);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: transparent;
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            font-family: var(--font-stack);
+            font-weight: bold;
+            font-size: 1.2rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .login-btn:hover {
+            background: var(--accent);
+            color: #000;
+            box-shadow: var(--glow);
+        }
+
+        .login-icon {
+            color: var(--accent);
+            margin-bottom: 20px;
+            width: 80px; height: 80px;
+            filter: drop-shadow(0 0 5px var(--accent));
+        }
+
+        #login-status {
+            margin-top: 20px;
+            height: 20px;
+            color: #f55;
+            font-size: 0.9rem;
+            text-shadow: 0 0 4px rgba(255,0,0,0.5);
+        }
+
+        /* --- BOOT SCREEN --- */
+        #boot-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #000;
+            z-index: 1000;
+            padding: 40px;
+            font-family: 'Courier New', Courier, monospace;
+            color: var(--highlight);
+            display: none;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+        .boot-line { margin-bottom: 5px; }
+        .boot-cursor { animation: blink 0.5s infinite; background: var(--highlight); width: 10px; height: 1em; display: inline-block; vertical-align: bottom;}
+
+        /* --- LAYOUT PRINCIPAL --- */
+        .container {
+            display: grid;
+            grid-template-columns: 280px 1fr 280px;
+            /* CAMBIO: Aumentado de 260px a 290px para que quepa bien el teclado */
+            grid-template-rows: 70px 1fr 290px 30px; 
+            height: 100%;
+            padding: 15px;
+            gap: 15px;
+            opacity: 0;
+            transition: opacity 1s;
+            animation: crt-flicker 0.15s infinite; /* Efecto flicker global */
+        }
+
+        .panel {
+            border: 1px solid var(--border-color);
+            position: relative;
+            background: var(--panel-bg);
+            padding: 15px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.6);
+            transition: box-shadow 0.3s, border-color 0.3s;
+        }
+        
+        .panel:hover {
+            border-color: rgba(255,255,255,0.25);
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.08);
+        }
+        
+        /* Esquinas estilo Sci-Fi */
+        .panel::before {
+            content: ''; position: absolute; top: -1px; left: -1px; width: 15px; height: 15px;
+            border-top: 2px solid var(--accent); border-left: 2px solid var(--accent);
+        }
+        .panel::after {
+            content: ''; position: absolute; bottom: -1px; right: -1px; width: 15px; height: 15px;
+            border-bottom: 2px solid var(--accent); border-right: 2px solid var(--accent);
+        }
+
+        /* --- HEADER --- */
+        .header {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 25px;
+            background: rgba(20,25,30,0.95);
+            clip-path: polygon(0 0, 100% 0, 100% 80%, 98% 100%, 0 100%);
+        }
+
+        .clock-large {
+            font-size: 2rem; 
+            text-shadow: var(--glow);
+            letter-spacing: 3px;
+            color: var(--highlight);
+            font-weight: bold;
+        }
+
+        .top-tabs { display: flex; gap: 2px; transform: skewX(-15deg); }
+        .tab {
+            padding: 8px 30px;
+            border: 1px solid var(--border-color);
+            background: #111;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s;
+            transform: skewX(15deg);
+            color: var(--text-dim);
+        }
+        .tab:hover { background: #222; color: var(--highlight); }
+        .tab.active {
+            background: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+            box-shadow: var(--glow);
+            font-weight: bold;
+        }
+
+        .logout-btn-header {
+            margin-left: 10px;
+            cursor: pointer;
+            color: #f55;
+            border: 1px solid #f55;
+            padding: 2px 8px;
+            font-size: 0.7rem;
+            transition: 0.2s;
+            display: inline-block;
+            box-shadow: 0 0 5px rgba(255,0,0,0.2);
+            animation: pulse-red 2s infinite;
+        }
+        @keyframes pulse-red { 0% { box-shadow: 0 0 2px #f00; } 50% { box-shadow: 0 0 8px #f00; } 100% { box-shadow: 0 0 2px #f00; } }
+        
+        .logout-btn-header:hover {
+            background: #f55;
+            color: #000;
+            box-shadow: 0 0 15px #f00;
+        }
+
+        /* --- SIDEBARS --- */
+        .sidebar-left { grid-row: 2 / 3; display: flex; flex-direction: column; gap: 20px; }
+        .sidebar-right { grid-row: 2 / 3; display: flex; flex-direction: column; gap: 20px; }
+
+        .stat-box h3 {
+            margin: 0 0 10px 0;
+            font-size: 1rem;
+            border-bottom: 1px solid var(--accent);
+            color: var(--accent);
+            letter-spacing: 2px;
+            padding-bottom: 5px;
+            text-shadow: 0 0 5px var(--accent);
+        }
+        
+        .cpu-graph { height: 80px; display: flex; align-items: flex-end; gap: 2px; margin-top: 10px; border-bottom: 1px dashed #333; }
+        .bar { flex: 1; background: var(--text-dim); transition: height 0.1s; }
+        .bar:nth-child(even) { background: var(--accent); opacity: 0.8; box-shadow: 0 0 5px var(--accent); }
+
+        .data-row { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 5px; border-bottom: 1px solid #222; padding: 2px 0;}
+
+        /* --- TERMINAL CENTRAL --- */
+        .main-terminal {
+            grid-column: 2 / 3;
+            grid-row: 2 / 3;
+            overflow: hidden;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #ccc;
+            position: relative;
+            background: rgba(0, 0, 0, 0.95);
+        }
+        
+        #matrix-canvas {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0.8; display: none; pointer-events: none;
+            z-index: 50;
+        }
+
+        #noise-canvas {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0.05; pointer-events: none; z-index: 99;
+        }
+
+        .terminal-header {
+            background: linear-gradient(90deg, #151515 0%, #000 100%);
+            padding: 8px;
+            font-size: 0.85rem;
+            margin: -15px -15px 15px -15px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex; justify-content: space-between;
+            color: var(--text-dim);
+        }
+
+        .prompt { color: var(--accent); font-weight: bold; text-shadow: 0 0 5px var(--accent);}
+        .output { color: #aaa; white-space: pre-wrap; margin-bottom: 4px; display: block; }
+        .system-msg { color: var(--highlight); margin-bottom: 2px; display: block; font-style: italic;}
+        .error-msg { color: #f55; margin-bottom: 2px; display: block; text-shadow: 0 0 5px red;}
+        .hack-msg { color: #0f0; margin-bottom: 2px; display: block; text-shadow: 0 0 5px #0f0;}
+        .dir { color: #4af; font-weight: bold; }
+        .input-line { display: flex; align-items: center; flex-wrap: wrap; margin-top: 5px; }
+        .user-input { color: #fff; margin-left: 5px; font-weight: bold;}
+
+        .cursor {
+            display: inline-block; width: 10px; height: 18px; background: var(--accent);
+            animation: smooth-blink 1s infinite alternate; margin-left: 2px; vertical-align: middle;
+            box-shadow: var(--glow);
+        }
+
+        @keyframes smooth-blink { 0% { opacity: 1; } 100% { opacity: 0.3; } }
+
+        /* --- NETWORK (GLOBO) --- */
+        .globe-container {
+            width: 100%; height: 200px;
+            border: 1px solid #333;
+            position: relative; overflow: hidden;
+            background: radial-gradient(circle, #112 0%, #000 100%);
+            box-shadow: inset 0 0 20px #000;
+        }
+        canvas#globe-canvas { width: 100%; height: 100%; }
+        
+        .net-overlay {
+            position: absolute; bottom: 5px; left: 5px;
+            font-size: 0.7rem; color: var(--accent);
+        }
+
+        /* --- ICONOS (ÁREA ROJA) --- */
+        .bottom-left {
+            grid-column: 1 / 2; grid-row: 3 / 4;
+            display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(2, 1fr);
+            gap: 8px; padding: 10px;
+        }
+        .icon-item {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border: 1px solid rgba(255,255,255,0.05); cursor: pointer; font-size: 0.75rem; color: var(--text-dim);
+            transition: all 0.2s; border-radius: 2px; background: rgba(255,255,255,0.02);
+        }
+        .icon-item:hover { 
+            border: 1px solid var(--highlight); 
+            background: rgba(0, 243, 255, 0.1); 
+            color: var(--highlight); 
+            text-shadow: var(--glow); 
+            transform: translateY(-2px);
+        }
+        .icon-item:active { transform: scale(0.95); }
+        .icon-item.active-state { color: #f55; border-color: #f55; box-shadow: 0 0 10px #f00; } 
+        .icon-item i { margin-bottom: 5px; width: 24px; height: 24px; }
+
+        /* --- TECLADO --- */
+        .bottom-right {
+            grid-column: 2 / -1; grid-row: 3 / 4;
+            display: flex; flex-direction: column; justify-content: center; padding: 10px 40px;
+            background: rgba(0,0,0,0.3);
+            border-top: 2px solid var(--accent);
+            overflow: hidden; /* Evitar scrollbars en desktop */
+        }
+        
+        /* CAMBIO: Reducir gap y margin para ajustar mejor */
+        .keyboard-row { display: flex; justify-content: center; gap: 5px; margin-bottom: 5px; }
+        
+        /* CAMBIO: Reducir altura de tecla para que quepan todas */
+        .key {
+            border: 1px solid #444; /* Borde un poco más visible */
+            color: var(--text-dim); border-radius: 4px;
+            min-width: 42px; height: 42px; /* Reducido de 45px */
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.9rem; background: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%); 
+            transition: all 0.05s; cursor: pointer;
+            box-shadow: 0 3px 0 #000;
+        }
+        .key:hover { border-color: var(--highlight); color: #fff; transform: translateY(-1px);}
+        .key.wide { flex-grow: 1; max-width: 110px; font-size: 0.8rem; font-weight: bold;}
+        .key.space { flex-grow: 4; max-width: 350px; }
+        .key.enter { border-color: var(--accent); color: var(--accent); }
+        .key.active, .key:active {
+            background: var(--accent); color: #000;
+            box-shadow: 0 0 15px var(--accent); transform: translateY(2px); border-color: #fff;
+        }
+
+        /* --- TICKER DE NOTICIAS --- */
+        .news-bar {
+            grid-column: 1 / -1; grid-row: 4 / 5;
+            background: #000; border-top: 1px solid var(--border-color);
+            display: flex; align-items: center; overflow: hidden; white-space: nowrap;
+            font-size: 0.85rem; color: var(--accent);
+            text-shadow: 0 0 2px var(--accent);
+        }
+        .ticker-wrap { width: 100%; overflow: hidden; }
+        .ticker { display: inline-block; padding-left: 100%; animation: ticker 25s linear infinite; }
+        .ticker-item { display: inline-block; padding: 0 3rem; }
+        .ticker-item::before { content: "+++ "; color: #fff; }
+        @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
+
+        /* --- RESPONSIVE / MEDIA QUERIES (ADAPTACIÓN A CUALQUIER TAMAÑO) --- */
+        @media (max-width: 1100px) {
+            /* Permitir scroll en móviles/tablets */
+            body { 
+                height: auto; 
+                overflow-y: auto; 
+                overflow-x: hidden;
+            }
+
+            /* Cambiar Grid a Columna Flexible */
+            .container {
+                display: flex;
+                flex-direction: column;
+                height: auto;
+                grid-template-columns: 1fr;
+                grid-template-rows: auto;
+                gap: 15px;
+                padding: 10px;
+            }
+
+            /* Ajustes Header */
+            .header {
+                flex-direction: row;
+                flex-wrap: wrap;
+                height: auto;
+                padding: 15px;
+                gap: 15px;
+                clip-path: none; /* Quitar recorte en móvil */
+            }
+            .header > div {
+                text-align: left !important;
+                width: 100%;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .clock-large { font-size: 1.8rem; }
+            
+            /* Pestañas (Tabs) */
+            .top-tabs {
+                width: 100%;
+                justify-content: center;
+                transform: none; /* Quitar inclinación en móvil */
+                margin-top: 5px;
+            }
+            .tab { transform: none; width: 33%; text-align: center; padding: 10px 5px; font-size: 0.8rem;}
+
+            /* Terminal - Altura fija adaptable */
+            .main-terminal {
+                height: 50vh; /* 50% de la altura de pantalla */
+                min-height: 350px;
+                order: 2; /* Poner terminal arriba */
+            }
+
+            /* Paneles Laterales - Ordenar */
+            .sidebar-left { order: 3; }
+            .sidebar-right { order: 4; }
+            
+            /* Panel Inferior (Iconos) */
+            .bottom-left { 
+                order: 5; 
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            /* Teclado - Hacerlo scrolleable horizontalmente si no cabe */
+            .bottom-right {
+                order: 6;
+                padding: 10px;
+                overflow-x: auto;
+                border-top: 1px solid var(--border-color);
+            }
+            .keyboard-row { min-width: 500px; /* Forzar ancho mínimo para no romper teclas */ }
+            
+            /* Ticker de noticias al final */
+            .news-bar {
+                order: 7;
+                position: relative; /* Ya no fijo en grid */
+                height: 40px;
+            }
+
+            /* Ajustes generales de texto móvil */
+            .stat-box h3 { font-size: 0.9rem; }
+            .data-row { font-size: 0.8rem; }
+        }
+
+        /* Pantallas muy pequeñas (Móviles Verticales) */
+        @media (max-width: 600px) {
+            .clock-large { font-size: 1.5rem; }
+            .login-container { padding: 30px 20px; }
+            .login-container::before { font-size: 0.7rem; letter-spacing: 1px; }
+            .icon-item span { display: none; } /* Ocultar texto iconos, solo iconos */
+            .icon-item i { width: 28px; height: 28px; margin-bottom: 0;}
+        }
+
+    </style>
+</head>
+<body>
+
+<!-- OVERLAY DESTRUCCION -->
+<div id="destruct-overlay"></div>
+
+<!-- PANTALLA DE LOGIN -->
+<div id="login-screen">
+    <canvas id="login-matrix-canvas"></canvas>
+    
+    <div class="login-container">
+        <div style="display: flex; justify-content: center;">
+            <i data-lucide="shield-check" class="login-icon"></i>
+        </div>
+        <input type="text" id="login-user" class="login-input" placeholder="IDENTITY (User)" autocomplete="off">
+        <input type="password" id="login-pass" class="login-input" placeholder="ACCESS KEY (Pass)">
+        <button class="login-btn" onclick="attemptLogin()">INITIATE HANDSHAKE</button>
+        <div id="login-status"></div>
+    </div>
+</div>
+
+<!-- PANTALLA DE ARRANQUE -->
+<div id="boot-screen">
+    <div id="boot-content"></div>
+    <div class="boot-cursor"></div>
+</div>
+
+<div class="container" id="main-interface">
+    <!-- HEADER -->
+    <div class="header">
+        <!-- Grupo Izquierdo: Reloj y Usuario -->
+        <div style="display: flex; flex-direction: column; justify-content: center; gap: 2px;">
+            <div class="clock-large" id="clock">00:00:00</div>
+            <div style="font-size: 0.9rem;">
+                USER: <span style="color: var(--accent); font-weight:bold;">ALEXSANDER</span>
+                <span class="logout-btn-header" onclick="logout()">[ TERMINATE ]</span>
+            </div>
+        </div>
+
+        <!-- Grupo Central/Derecho: Estadísticas del Sistema -->
+        <div style="font-size: 0.85rem; text-align: right; line-height: 1.4;">
+            <div>SYS UPTIME: <span style="color:var(--highlight)">48:09:09</span></div>
+            <div>KERNEL: <span style="color:var(--text-dim)">Linux 6.8.9-edx-hardened</span></div>
+        </div>
+
+        <div class="top-tabs">
+            <div class="tab active" data-tab="MAIN">COMMAND</div>
+            <div class="tab" data-tab="SERVER 2">REMOTE</div>
+            <div class="tab" data-tab="SERVER 3">SECURE</div>
+        </div>
+    </div>
+
+    <!-- LEFT SIDEBAR -->
+    <div class="panel sidebar-left">
+        <div class="stat-box">
+            <h3>CPU CORES (8)</h3>
+            <div class="data-row"><span>CORE 0</span><span style="color:var(--accent)">ACTIVE</span></div>
+            <div class="cpu-graph" id="cpu-main"></div>
+            <div class="data-row"><span>LOAD AVG</span><span id="cpu-val">34%</span></div>
+            <div class="data-row"><span>TEMP</span><span style="color:#f55">42°C</span></div>
+        </div>
+        <div class="stat-box">
+            <h3>MEMORY BUFFER</h3>
+            <div class="data-row"><span>USED</span><span class="mem-used">8.4GB</span></div>
+            <div class="data-row"><span>FREE</span><span class="mem-free">16GB</span></div>
+            <div style="width:100%; height: 8px; background:#222; margin-top:5px; border:1px solid #333;">
+                <div id="mem-bar" style="width: 45%; height:100%; background:var(--accent); box-shadow: 0 0 10px var(--accent);"></div>
+            </div>
+        </div>
+        <div class="stat-box">
+            <h3>DAEMONS</h3>
+            <div class="data-row"><span>kernel_task</span><span>12.4%</span></div>
+            <div class="data-row"><span>eDX-UI</span><span style="color:var(--highlight)">8.1%</span></div>
+            <div class="data-row"><span>ssh-agent</span><span>0.2%</span></div>
+            <div class="data-row"><span>postgres</span><span>1.1%</span></div>
+        </div>
+    </div>
+
+    <!-- CENTER TERMINAL -->
+    <div class="panel main-terminal" id="terminal">
+        <canvas id="matrix-canvas"></canvas>
+        <canvas id="noise-canvas"></canvas> <!-- Efecto ruido -->
+        <div class="terminal-header">
+            <span>eDX-UI v4.0.0 - Ultimate Shell [Encrypted]</span>
+            <span>SSH-2.0-OpenSSH_9.3p1</span>
+        </div>
+        <div id="terminal-content"></div>
+    </div>
+
+    <!-- RIGHT SIDEBAR -->
+    <div class="panel sidebar-right">
+        <div class="stat-box">
+            <h3>GLOBAL LINK</h3>
+            <div class="globe-container">
+                <canvas id="globe-canvas"></canvas>
+                <div class="net-overlay">
+                    LAT: <span id="lat-val">00.00</span> LON: <span id="lon-val">00.00</span><br>
+                    NODES: 14 ACTIVE
+                </div>
+            </div>
+        </div>
+        <div class="stat-box">
+            <h3>NETWORK TRAFFIC</h3>
+            <div style="color: var(--highlight); font-size: 1.1rem; margin-bottom: 5px;">IP: 192.168.100.19</div>
+            <div style="border: 1px solid #333; background: #000; height: 80px; position: relative; overflow: hidden;">
+                <svg width="100%" height="100%">
+                    <polyline id="net-poly" points="0,80" style="fill:none;stroke:var(--accent);stroke-width:2; stroke-linejoin: round;" />
+                </svg>
+            </div>
+            <div class="data-row" style="margin-top:5px;"><span>UP: 12MB/s</span><span>DOWN: 45MB/s</span></div>
+        </div>
+    </div>
+
+    <!-- BOTTOM LEFT (ICONOS) -->
+    <div class="panel bottom-left">
+        <div class="icon-item" data-action="APPS"><i data-lucide="layout-grid"></i><span>Apps</span></div>
+        <div class="icon-item" data-action="FILES"><i data-lucide="folder-open"></i><span>Files</span></div>
+        <div class="icon-item" data-action="DISK"><i data-lucide="hard-drive"></i><span>Mounts</span></div>
+        <div class="icon-item" data-action="TERM"><i data-lucide="terminal-square"></i><span>Term</span></div>
+        <div class="icon-item" data-action="SETTINGS"><i data-lucide="sliders"></i><span>Config</span></div>
+        <div class="icon-item" data-action="DB"><i data-lucide="database"></i><span>SQL</span></div>
+        <div class="icon-item" data-action="NET"><i data-lucide="globe-2"></i><span>Uplink</span></div>
+        <!-- Nuevo Botón de Mute -->
+        <div class="icon-item" data-action="MUTE" id="mute-btn"><i data-lucide="volume-2"></i><span>Audio</span></div>
+    </div>
+
+    <!-- BOTTOM RIGHT (TECLADO) -->
+    <div class="panel bottom-right">
+        <div class="keyboard-row">
+            <div class="key" data-key="1">1</div><div class="key" data-key="2">2</div><div class="key" data-key="3">3</div>
+            <div class="key" data-key="4">4</div><div class="key" data-key="5">5</div><div class="key" data-key="6">6</div>
+            <div class="key" data-key="7">7</div><div class="key" data-key="8">8</div><div class="key" data-key="9">9</div>
+            <div class="key" data-key="0">0</div><div class="key" data-key="-">-</div><div class="key" data-key="=">=</div>
+            <div class="key wide" data-key="BACKSPACE">DEL</div>
+        </div>
+        <div class="keyboard-row">
+            <div class="key wide" data-key="TAB">TAB</div>
+            <div class="key" data-key="Q">Q</div><div class="key" data-key="W">W</div><div class="key" data-key="E">E</div>
+            <div class="key" data-key="R">R</div><div class="key" data-key="T">T</div><div class="key" data-key="Y">Y</div>
+            <div class="key" data-key="U">U</div><div class="key" data-key="I">I</div><div class="key" data-key="O">O</div>
+            <div class="key" data-key="P">P</div><div class="key" data-key="[">[</div><div class="key" data-key="]">]</div>
+            <div class="key wide enter" data-key="ENTER">EXEC</div>
+        </div>
+        <div class="keyboard-row">
+            <div class="key wide" data-key="CAPSLOCK">CAPS</div>
+            <div class="key" data-key="A">A</div><div class="key" data-key="S">S</div><div class="key" data-key="D">D</div>
+            <div class="key" data-key="F">F</div><div class="key" data-key="G">G</div><div class="key" data-key="H">H</div>
+            <div class="key" data-key="J">J</div><div class="key" data-key="K">K</div><div class="key" data-key="L">L</div>
+            <div class="key" data-key=";">;</div><div class="key" data-key="'">'</div><div class="key" data-key="\">\|</div>
+        </div>
+        <div class="keyboard-row">
+            <div class="key wide" data-key="SHIFT">SHIFT</div>
+            <div class="key" data-key="Z">Z</div><div class="key" data-key="X">X</div><div class="key" data-key="C">C</div>
+            <div class="key" data-key="V">V</div><div class="key" data-key="B">B</div><div class="key" data-key="N">N</div>
+            <div class="key" data-key="M">M</div><div class="key" data-key=",">,</div><div class="key" data-key=".">.</div>
+            <div class="key" data-key="/">/</div><div class="key wide" data-key="SHIFT">SHIFT</div>
+        </div>
+        <div class="keyboard-row">
+            <div class="key wide" data-key="CONTROL">CTRL</div>
+            <div class="key wide" data-key="ALT">ALT</div>
+            <div class="key space" data-key=" ">SPACE_BAR</div>
+            <div class="key wide" data-key="ALT">ALT</div>
+            <div class="key wide" data-key="CONTROL">CTRL</div>
+        </div>
+    </div>
+
+    <!-- NEWS TICKER -->
+    <div class="news-bar">
+        <div class="ticker-wrap">
+            <div class="ticker">
+                <span class="ticker-item">ALERT: Zero-day vulnerability found in cortical implants. Update immediately.</span>
+                <span class="ticker-item">MARKET: Cyberdyne Systems stock up 45% after AI breakthrough.</span>
+                <span class="ticker-item">NETWORK: Sector 9 uplink offline due to solar flare interference.</span>
+                <span class="ticker-item">SYSTEM: Neural handshake stable. Latency: 4ms.</span>
+                <span class="ticker-item">WEATHER: Heavy acid rain expected in Neo-Tokyo district.</span>
+                <span class="ticker-item">WANTED: Rogue AI "WinterMute" seen in deep web subnets.</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    lucide.createIcons();
+
+    /* =========================================
+       1. AUDIO SYSTEM (ENHANCED)
+       ========================================= */
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    let isMuted = false;
+    let humNode = null;
+    let humGain = null;
+    
+    // Ruido ambiental (Brown noise simulado)
+    function toggleHum(enable) {
+        if(enable && !isMuted) {
+            if(!humNode) {
+                const bufferSize = 4096;
+                const brownNoise = (function() {
+                    const ctx = audioCtx;
+                    const node = ctx.createScriptProcessor(bufferSize, 1, 1);
+                    node.onaudioprocess = function(e) {
+                        const output = e.outputBuffer.getChannelData(0);
+                        for (let i = 0; i < bufferSize; i++) {
+                            const white = Math.random() * 2 - 1;
+                            output[i] = (lastOut + (0.02 * white)) / 1.02;
+                            lastOut = output[i];
+                            output[i] *= 3.5; 
+                        }
+                    }
+                    return node;
+                })();
+                let lastOut = 0;
+                humGain = audioCtx.createGain();
+                humGain.gain.value = 0.012; // Volumen ajustado
+                brownNoise.connect(humGain);
+                humGain.connect(audioCtx.destination);
+                humNode = brownNoise;
+            }
+        } else {
+            if(humGain) humGain.disconnect();
+            if(humNode) humNode.disconnect();
+            humNode = null;
+        }
+    }
+
+    function playTone(freq, type, duration, vol = 0.1) {
+        if(isMuted) return;
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+    }
+
+    function playKeySound() {
+        // Variación ligera de pitch para realismo
+        const variance = Math.random() * 50 - 25;
+        playTone(600 + variance, 'square', 0.05, 0.02); 
+        playTone(150, 'sawtooth', 0.02, 0.04); 
+    }
+
+    function playBeep() { playTone(1200, 'sine', 0.1, 0.1); }
+    function playError() { 
+        playTone(150, 'sawtooth', 0.3, 0.2);
+        playTone(100, 'square', 0.3, 0.2);
+    }
+    function playBootSound() {
+        setTimeout(() => playTone(220, 'sine', 1.0, 0.2), 0);
+        setTimeout(() => playTone(440, 'sine', 1.0, 0.2), 200);
+        setTimeout(() => playTone(880, 'sine', 1.5, 0.1), 400);
+    }
+    function playAlarm() {
+        if(isMuted) return;
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.linearRampToValueAtTime(300, now + 0.5);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.linearRampToValueAtTime(0, now + 0.5);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(now + 0.5);
+    }
+
+    function toggleMute() {
+        isMuted = !isMuted;
+        const btn = document.getElementById('mute-btn');
+        if(isMuted) {
+            btn.classList.add('active-state');
+            btn.querySelector('span').innerText = "Muted";
+            toggleHum(false);
+        } else {
+            btn.classList.remove('active-state');
+            btn.querySelector('span').innerText = "Audio";
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            playBeep();
+            toggleHum(true);
+        }
+    }
+
+    /* =========================================
+       2. FILE SYSTEM
+       ========================================= */
+    const fileSystem = {
+        "/": {
+            type: "dir",
+            children: {
+                "home": { type: "dir", children: {
+                    "alexsander": { type: "dir", children: {
+                        "documents": { type: "dir", children: {
+                            "project_titan.txt": { type: "file", content: "Project Titan: \nStatus: Active\nTarget: Global domination via AI." },
+                            "passwords.txt": { type: "file", content: "root: toor\nadmin: 12345\nwifi: 99887766" }
+                        }},
+                        "downloads": { type: "dir", children: {
+                             "payload.exe": { type: "file", content: "BINARY FILE - CANNOT DISPLAY" }
+                        }},
+                        "notes.txt": { type: "file", content: "Buy more thermal paste.\nUpdate firewall rules." }
+                    }}
+                }},
+                "bin": { type: "dir", children: {
+                    "nmap": { type: "exec" },
+                    "ssh": { type: "exec" },
+                    "hack": { type: "exec" },
+                    "neofetch": { type: "exec" }
+                }},
+                "var": { type: "dir", children: { "log": { type: "dir", children: {} } } }
+            }
+        }
+    };
+
+    let currentPath = ["home", "alexsander"];
+    let currentUser = "alexsander";
+
+    function getCurrentDirObj() {
+        let ptr = fileSystem["/"];
+        for (let p of currentPath) {
+            if (ptr.children && ptr.children[p]) ptr = ptr.children[p];
+            else return null;
+        }
+        return ptr;
+    }
+
+    /* =========================================
+       3. LOGIN & MATRIX
+       ========================================= */
+    const loginCanvas = document.getElementById('login-matrix-canvas');
+    const lCtx = loginCanvas.getContext('2d');
+    let loginMatrixInterval;
+    
+    function startLoginMatrix() {
+        loginCanvas.width = window.innerWidth;
+        loginCanvas.height = window.innerHeight;
+        const chars = "01ABCDEFXYZ";
+        const fontSize = 14;
+        const columns = loginCanvas.width / fontSize;
+        const drops = [];
+        for(let x=0; x<columns; x++) drops[x] = Math.random() * loginCanvas.height;
+
+        function drawLoginMatrix() {
+            lCtx.fillStyle = "rgba(0, 0, 0, 0.05)";
+            lCtx.fillRect(0, 0, loginCanvas.width, loginCanvas.height);
+            lCtx.fillStyle = "#0ff"; // Cian
+            lCtx.font = fontSize + "px monospace";
+
+            for(let i=0; i<drops.length; i++) {
+                const text = chars.charAt(Math.floor(Math.random()*chars.length));
+                lCtx.fillText(text, i*fontSize, drops[i]*fontSize);
+                if(drops[i]*fontSize > loginCanvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            }
+        }
+        if(loginMatrixInterval) clearInterval(loginMatrixInterval);
+        loginMatrixInterval = setInterval(drawLoginMatrix, 33);
+    }
+    
+    function stopLoginMatrix() {
+        clearInterval(loginMatrixInterval);
+        lCtx.clearRect(0,0, loginCanvas.width, loginCanvas.height);
+    }
+
+    function attemptLogin() {
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        const user = document.getElementById('login-user').value;
+        const pass = document.getElementById('login-pass').value;
+        const status = document.getElementById('login-status');
+        const btn = document.querySelector('.login-btn');
+        const container = document.querySelector('.login-container');
+
+        status.innerHTML = "AUTHENTICATING BIOMETRICS...";
+        status.style.color = "var(--accent)";
+        btn.disabled = true;
+        
+        // Simular ruido de proceso
+        let count = 0;
+        const compSound = setInterval(() => {
+            if(!isMuted) playTone(800 + Math.random()*400, 'square', 0.05, 0.05);
+            count++;
+            if(count > 8) clearInterval(compSound);
+        }, 100);
+
+        setTimeout(() => {
+            if(user === 'Alexsander' && pass === '2007') {
+                status.innerHTML = "ACCESS GRANTED. DECRYPTING ENVIRONMENT...";
+                status.style.color = "#0f0";
+                playTone(1200, 'sine', 0.2, 0.2); 
+                toggleHum(true); // Encender ruido ambiente
+                
+                // Cargar tema guardado
+                const savedTheme = localStorage.getItem('edx_theme');
+                if(savedTheme) document.body.className = savedTheme;
+
+                setTimeout(() => {
+                    const loginScreen = document.getElementById('login-screen');
+                    loginScreen.style.opacity = '0';
+                    loginScreen.style.transition = 'opacity 0.8s';
+                    setTimeout(() => stopLoginMatrix(), 800);
+
+                    const bootScreen = document.getElementById('boot-screen');
+                    bootScreen.style.display = 'flex';
+                    
+                    setTimeout(() => {
+                        loginScreen.style.display = 'none';
+                        runBootSequence(); 
+                    }, 800);
+                }, 1000);
+            } else {
+                status.innerHTML = "ACCESS DENIED. INCORRECT CREDENTIALS.";
+                status.style.color = "#f55";
+                playError();
+                container.classList.add('shake');
+                setTimeout(() => container.classList.remove('shake'), 500);
+                btn.disabled = false;
+            }
+        }, 1500);
+    }
+
+    function logout() {
+        playTone(400, 'sawtooth', 0.5, 0.2); 
+        toggleHum(false);
+        const main = document.getElementById('main-interface');
+        const login = document.getElementById('login-screen');
+        
+        main.style.opacity = '0';
+        document.getElementById('login-pass').value = '';
+        document.getElementById('login-status').innerHTML = '';
+        document.querySelector('.login-btn').disabled = false;
+
+        setTimeout(() => {
+            main.style.display = 'none';
+            login.style.display = 'flex';
+            startLoginMatrix();
+            setTimeout(() => { login.style.opacity = '1'; }, 100);
+        }, 1000);
+    }
+    
+    document.getElementById('login-pass').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') attemptLogin();
+    });
+
+    /* =========================================
+       4. BOOT SEQUENCE
+       ========================================= */
+    const bootLines = [
+        "BIOS Date 02/05/2026 23:50:15 Ver: 1.0.0",
+        "CPU: Neural Core x128 @ 8.0GHz",
+        "Memory Test: 32768K OK",
+        "Detecting Primary Master ... eDX-UI NVMe 4TB",
+        "Loading Kernel Modules ... [OK]",
+        "Mounting Root File System ... [OK]",
+        "Starting Security Daemons ... [OK]",
+        "Establishing Satellite Link ... [OK]",
+        "Calibrating Neural Sensors ... [OK]",
+        "Initializing Holographic Interface ... [OK]",
+        "Decrypting User Keys ... [OK]",
+        "Welcome, Alexsander."
+    ];
+
+    const bootScreen = document.getElementById('boot-screen');
+    const bootContent = document.getElementById('boot-content');
+    const mainInterface = document.getElementById('main-interface');
+
+    function runBootSequence() {
+        bootContent.innerHTML = '';
+        bootScreen.style.opacity = '1';
+
+        let i = 0;
+        function nextLine() {
+            if (i < bootLines.length) {
+                const line = document.createElement('div');
+                line.className = 'boot-line';
+                line.textContent = bootLines[i];
+                bootContent.appendChild(line);
+                if(!isMuted) playTone(800 + (i*50), 'square', 0.05, 0.05); 
+                i++;
+                setTimeout(nextLine, Math.random() * 200 + 50);
+            } else {
+                setTimeout(() => {
+                    playBootSound();
+                    bootScreen.style.opacity = '0';
+                    setTimeout(() => bootScreen.style.display = 'none', 500);
+                    mainInterface.style.display = 'grid'; 
+                    setTimeout(() => mainInterface.style.opacity = '1', 50);
+                    if(termContent.innerHTML === '') initTerminal(); 
+                    resetIdleTimer();
+                }, 800);
+            }
+        }
+        setTimeout(nextLine, 500);
+    }
+    
+    window.onload = function() {
+        startLoginMatrix();
+        window.addEventListener('resize', () => {
+            if(document.getElementById('login-screen').style.display !== 'none') startLoginMatrix();
+            resizeGlobe();
+        });
+    };
+
+    /* =========================================
+       5. TERMINAL & TYPEWRITER EFFECT
+       ========================================= */
+    const termContent = document.getElementById('terminal-content');
+    let isUserTyping = false;
+    let currentUserInput = "";
+    let inputDisplaySpan = null;
+    let commandHistory = [];
+    let historyIndex = -1;
+    let availableCommands = ["HELP", "CLEAR", "LS", "CD", "CAT", "MKDIR", "RM", "HACK", "NMAP", "PS", "CALC", "HISTORY", "DESTRUCT", "WHOAMI", "DATE", "THEME", "MATRIX", "NEOFETCH", "LOGOUT", "REBOOT"];
+
+    // Función para escribir texto tipo máquina de escribir
+    function typeWriter(element, text, speed = 10, callback = null) {
+        let i = 0;
+        isUserTyping = false; // Bloquear input mientras escribe el sistema
+        function type() {
+            if (i < text.length) {
+                // Si es HTML tag, agregarlo completo de una
+                if (text.charAt(i) === '<') {
+                    let tag = "";
+                    while(text.charAt(i) !== '>' && i < text.length) {
+                        tag += text.charAt(i);
+                        i++;
+                    }
+                    tag += '>';
+                    i++;
+                    element.innerHTML += tag;
+                } else {
+                    element.innerHTML += text.charAt(i);
+                    i++;
+                }
+                document.getElementById('terminal').scrollTop = document.getElementById('terminal').scrollHeight;
+                setTimeout(type, speed);
+            } else {
+                element.innerHTML += "<br>";
+                if(callback) callback();
+            }
+        }
+        type();
+    }
+
+    function getPrompt() {
+        return `root@eDX-System:<span class='dir'>${currentPath[currentPath.length-1]}</span>$`;
+    }
+
+    function createInputLine() {
+        const line = document.createElement('div');
+        line.className = 'input-line';
+        line.innerHTML = `<span class='prompt'>${getPrompt()}</span><span class='user-input'></span><span class='cursor'></span>`;
+        termContent.appendChild(line);
+        inputDisplaySpan = line.querySelector('.user-input');
+        document.getElementById('terminal').scrollTop = document.getElementById('terminal').scrollHeight;
+        currentUserInput = "";
+        historyIndex = -1;
+        isUserTyping = true;
+    }
+
+    function initTerminal() {
+        const initialText = `<span style="color:var(--highlight)">eDX-UI Ultimate System Ready.</span> Type 'help' for commands.`;
+        const line = document.createElement('div');
+        line.className = 'output';
+        termContent.appendChild(line);
+        typeWriter(line, initialText, 20, createInputLine);
+    }
+
+    function processCommand(cmdRaw) {
+        const args = cmdRaw.trim().split(" ");
+        const cmd = args[0].toLowerCase();
+        const param = args.slice(1).join(" ");
+        if(cmdRaw.trim() !== "") commandHistory.unshift(cmdRaw);
+
+        const output = document.createElement('div');
+        output.className = 'output';
+        termContent.appendChild(output);
+
+        // Remover cursor anterior
+        const oldCursor = inputDisplaySpan.parentNode.querySelector('.cursor');
+        if(oldCursor) oldCursor.remove();
+
+        let response = "";
+        let isAsync = false; // Para comandos que tardan
+
+        switch(cmd) {
+            case '': break;
+            case 'help':
+                response = "Available commands: <span style='color:var(--accent)'>" + availableCommands.join(", ") + "</span>";
+                break;
+            case 'clear':
+                termContent.innerHTML = "";
+                output.remove();
+                createInputLine();
+                return;
+            case 'whoami': response = "uid=0(root) gid=0(root) groups=0(root)"; break;
+            case 'date': response = new Date().toString(); break;
+            case 'ls':
+                const dir = getCurrentDirObj();
+                if(dir && dir.children) {
+                    response = Object.keys(dir.children).map(k => {
+                        return dir.children[k].type === 'dir' ? `<span class='dir'>${k}/</span>` : k;
+                    }).join("  ");
+                } else response = "Error: Cannot read directory.";
+                break;
+            case 'cd':
+                if(!param || param === "~") currentPath = ["home", "alexsander"];
+                else if (param === "..") {
+                    if(currentPath.length > 0) currentPath.pop();
+                    if(currentPath.length === 0) currentPath = [];
+                } else {
+                    const currentDir = getCurrentDirObj();
+                    if(currentDir.children[param] && currentDir.children[param].type === 'dir') currentPath.push(param);
+                    else response = `<span class='error-msg'>cd: ${param}: No such directory</span>`;
+                }
+                break;
+            case 'cat':
+                if(!param) response = "usage: cat <filename>";
+                else {
+                    const curr = getCurrentDirObj();
+                    if(curr.children[param] && curr.children[param].type === 'file') response = curr.children[param].content;
+                    else response = `<span class='error-msg'>cat: ${param}: No such file</span>`;
+                }
+                break;
+            case 'hack':
+                isAsync = true;
+                if(param) runHackSimulation(param);
+                else response = "usage: hack <target>";
+                break;
+            case 'nmap':
+                isAsync = true;
+                if(param) runNmapSimulation(param);
+                else response = "usage: nmap <ip>";
+                break;
+            case 'neofetch':
+                response = `
+<div style="display:flex; gap:20px; align-items:center;">
+<pre style="color:var(--accent); font-size: 0.8rem;">
+      .---.
+     /     \\
+    |  (o)  |
+     \\     /
+      '---'
+    _ / | \\ _
+   (_/  |  \\_)
+</pre>
+<div style="font-size:0.9rem;">
+<span style="color:var(--accent)">alexsander@edx-ui</span><br>
+------------------<br>
+<span style="color:var(--highlight)">OS</span>: eDX Linux x86_64<br>
+<span style="color:var(--highlight)">Kernel</span>: 6.8.9-hardened<br>
+<span style="color:var(--highlight)">Uptime</span>: 48h 9m<br>
+<span style="color:var(--highlight)">Shell</span>: bash 5.2<br>
+<span style="color:var(--highlight)">CPU</span>: Neural Core x128<br>
+<span style="color:var(--highlight)">Memory</span>: 8421MiB / 32768MiB
+</div>
+</div>`;
+                break;
+            case 'destruct': startSelfDestruct(); return;
+            case 'calc':
+                if(!param) response = "usage: calc <expression>";
+                else {
+                    try { if(/^[0-9+\-*/().\s]*$/.test(param)) response = eval(param); else response = "Error: Invalid chars"; } 
+                    catch(e) { response = "Error: Invalid Expression"; }
+                }
+                break;
+            case 'theme':
+                if(param === 'green') { document.body.className = 'theme-green'; localStorage.setItem('edx_theme', 'theme-green'); response="Theme set to Green."; }
+                else if(param === 'amber') { document.body.className = 'theme-amber'; localStorage.setItem('edx_theme', 'theme-amber'); response="Theme set to Amber.";}
+                else if(param === 'red') { document.body.className = 'theme-red'; localStorage.setItem('edx_theme', 'theme-red'); response="Theme set to Red.";}
+                else if(param === 'default') { document.body.className = ''; localStorage.removeItem('edx_theme'); response="Theme set to Default.";}
+                else response = "Themes: default, green, amber, red";
+                break;
+            case 'matrix': startMatrixEffect(); response = "Visualizer started. Press any key to stop."; break;
+            case 'logout': logout(); return;
+            case 'reboot': location.reload(); return;
+            default:
+                response = `<span class='error-msg'>command not found: ${cmd}</span>`;
+                playError();
+        }
+
+        if(!isAsync) {
+            typeWriter(output, response, 5, createInputLine);
+        } else if (response) {
+            typeWriter(output, response, 5, createInputLine);
+        }
+    }
+
+    // --- HACK SIM ---
+    function runHackSimulation(target) {
+        const stages = [
+            `Resolving target host ${target}...`,
+            `Connecting to ${target}:443... Connected.`,
+            `Scanning for vulnerabilities (CVE-2026-99)...`,
+            `Vulnerability found: Buffer Overflow in auth_module.`,
+            `Injecting payload...`,
+            `Escalating privileges...`
+        ];
+        let i = 0;
+        function nextStage() {
+            if(i < stages.length) {
+                const div = document.createElement('div');
+                div.className = 'hack-msg';
+                div.textContent = stages[i];
+                termContent.appendChild(div);
+                document.getElementById('terminal').scrollTop = document.getElementById('terminal').scrollHeight;
+                if(!isMuted) playTone(1000, 'square', 0.1, 0.1);
+                i++;
+                setTimeout(nextStage, 600);
+            } else {
+                const barLine = document.createElement('div');
+                barLine.className = 'hack-msg';
+                termContent.appendChild(barLine);
+                let progress = 0;
+                const barInt = setInterval(() => {
+                    progress += 4;
+                    let barStr = "[";
+                    for(let b=0; b<20; b++) barStr += (b*5 < progress) ? "#" : ".";
+                    barStr += `] ${progress}%`;
+                    barLine.textContent = barStr;
+                    if(progress >= 100) {
+                        clearInterval(barInt);
+                        termContent.innerHTML += `<div class='hack-msg'>ACCESS GRANTED. Root shell spawned.</div>`;
+                        document.getElementById('terminal').scrollTop = document.getElementById('terminal').scrollHeight;
+                        createInputLine();
+                    }
+                }, 50);
+            }
+        }
+        nextStage();
+    }
+    
+    // --- NMAP SIM ---
+    function runNmapSimulation(ip) {
+        let outputText = `Starting Nmap 7.94 at ${new Date().toLocaleTimeString()}...<br>`;
+        outputText += `Nmap scan report for ${ip}<br>Host is up (0.00042s latency).<br>`;
+        outputText += `<span style="color:var(--text-dim)">PORT    STATE SERVICE</span><br>`;
+        outputText += `21/tcp  open  ftp<br>22/tcp  open  ssh<br>80/tcp  open  http<br>443/tcp open  https<br>`;
+        outputText += `MAC Address: DE:AD:BE:EF:00:01 (Unknown)<br><br>Nmap done: 1 IP address (1 host up) scanned in 2.02 seconds.`;
+        
+        const div = document.createElement('div');
+        div.className = 'output';
+        termContent.appendChild(div);
+        typeWriter(div, outputText, 10, createInputLine);
+    }
+
+    // --- SELF DESTRUCT ---
+    function startSelfDestruct() {
+        const overlay = document.getElementById('destruct-overlay');
+        overlay.classList.add('alarm-active');
+        let count = 5;
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'error-msg';
+        msgDiv.style.fontSize = '2rem';
+        msgDiv.style.textAlign = 'center';
+        termContent.appendChild(msgDiv);
+        
+        const interval = setInterval(() => {
+            msgDiv.innerHTML = `DESTRUCTION IN ${count}...`;
+            playAlarm();
+            if(count <= 0) {
+                clearInterval(interval);
+                document.body.innerHTML = "";
+                document.body.style.background = "#fff";
+                setTimeout(() => location.reload(), 200);
+            }
+            count--;
+        }, 1000);
+    }
+
+    // Input Handling
+    function handleInput(key) {
+        if (!isUserTyping) return;
+        resetIdleTimer();
+        playKeySound();
+
+        if(isMatrixRunning) {
+            stopMatrixEffect();
+            return;
+        }
+
+        if (key === 'ENTER') {
+            const command = currentUserInput;
+            processCommand(command);
+        } 
+        else if (key === 'BACKSPACE' || key === 'DEL') {
+            currentUserInput = currentUserInput.slice(0, -1);
+            inputDisplaySpan.textContent = currentUserInput;
+        } 
+        else if (key.length === 1) {
+            currentUserInput += key;
+            inputDisplaySpan.textContent = currentUserInput;
+        }
+        document.getElementById('terminal').scrollTop = document.getElementById('terminal').scrollHeight;
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (document.getElementById('login-screen').style.display !== 'none') return;
+        const key = e.key.toUpperCase();
+        
+        // Historial
+        if(isUserTyping && !isMatrixRunning) {
+            if(e.key === 'ArrowUp') {
+                e.preventDefault();
+                if(historyIndex < commandHistory.length - 1) {
+                    historyIndex++;
+                    currentUserInput = commandHistory[historyIndex];
+                    inputDisplaySpan.textContent = currentUserInput;
+                }
+                return;
+            }
+            if(e.key === 'ArrowDown') {
+                e.preventDefault();
+                if(historyIndex > -1) {
+                    historyIndex--;
+                    currentUserInput = historyIndex === -1 ? "" : commandHistory[historyIndex];
+                    inputDisplaySpan.textContent = currentUserInput;
+                }
+                return;
+            }
+        }
+
+        let mappedKey = key;
+        if(key === 'ENTER') mappedKey = 'ENTER';
+        if(key === 'BACKSPACE') mappedKey = 'BACKSPACE';
+        if(key === ' ') mappedKey = ' ';
+        
+        // Visual key press
+        let virtualKey = null;
+        if(key.length===1) virtualKey = document.querySelector(`.key[data-key="${key}"]`);
+        else virtualKey = document.querySelector(`.key[data-key="${mappedKey}"]`);
+
+        if (virtualKey) {
+            virtualKey.classList.add('active');
+            setTimeout(() => virtualKey.classList.remove('active'), 100);
+            handleInput(virtualKey.getAttribute('data-key'));
+        }
+        if(!virtualKey && key.length===1) handleInput(key); // Fallback
+    });
+    
+    // Click events for keyboard
+    document.querySelectorAll('.key').forEach(k => {
+        k.addEventListener('click', () => handleInput(k.getAttribute('data-key')));
+    });
+
+    /* =========================================
+       6. MATRIX EFFECT
+       ========================================= */
+    const matrixCanvas = document.getElementById('matrix-canvas');
+    const mCtx = matrixCanvas.getContext('2d');
+    let matrixInterval;
+    let isMatrixRunning = false;
+    let idleTimer;
+    
+    function resetIdleTimer() {
+        clearTimeout(idleTimer);
+        if(!isMatrixRunning && isUserTyping) {
+            idleTimer = setTimeout(() => { startMatrixEffect(); }, 60000); 
+        }
+    }
+
+    function startMatrixEffect() {
+        if(isMatrixRunning) return;
+        isMatrixRunning = true;
+        matrixCanvas.style.display = 'block';
+        matrixCanvas.width = matrixCanvas.parentElement.offsetWidth;
+        matrixCanvas.height = matrixCanvas.parentElement.offsetHeight;
+        const chars = "010101アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン";
+        const fontSize = 14;
+        const columns = matrixCanvas.width / fontSize;
+        const drops = [];
+        for(let x=0; x<columns; x++) drops[x] = 1;
+
+        function drawMatrix() {
+            mCtx.fillStyle = "rgba(0, 0, 0, 0.05)";
+            mCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+            mCtx.fillStyle = "#0F0"; 
+            mCtx.font = fontSize + "px monospace";
+            for(let i=0; i<drops.length; i++) {
+                const text = chars.charAt(Math.floor(Math.random()*chars.length));
+                mCtx.fillText(text, i*fontSize, drops[i]*fontSize);
+                if(drops[i]*fontSize > matrixCanvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            }
+        }
+        matrixInterval = setInterval(drawMatrix, 40);
+    }
+
+    function stopMatrixEffect() {
+        if(!isMatrixRunning) return;
+        isMatrixRunning = false;
+        clearInterval(matrixInterval);
+        matrixCanvas.style.display = 'none';
+        mCtx.clearRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+        if(!document.querySelector('.input-line')) createInputLine();
+        resetIdleTimer();
+    }
+
+    /* =========================================
+       7. 3D GLOBE (MEJORADO - WIREFRAME & NODES)
+       ========================================= */
+    const globeCanvas = document.getElementById('globe-canvas');
+    const gCtx = globeCanvas.getContext('2d');
+    let gWidth, gHeight;
+    const points = [];
+    const sphereRadius = 70;
+    let rotation = 0;
+
+    // Generar puntos aleatorios sobre la esfera
+    for(let i=0; i<180; i++) {
+        const phi = Math.acos(-1 + (2 * i) / 180);
+        const theta = Math.sqrt(180 * Math.PI) * phi;
+        points.push({
+            x: sphereRadius * Math.cos(theta) * Math.sin(phi),
+            y: sphereRadius * Math.sin(theta) * Math.sin(phi),
+            z: sphereRadius * Math.cos(phi),
+            active: Math.random() > 0.95
+        });
+    }
+
+    function resizeGlobe() {
+        gWidth = globeCanvas.parentElement.offsetWidth;
+        gHeight = globeCanvas.parentElement.offsetHeight;
+        globeCanvas.width = gWidth;
+        globeCanvas.height = gHeight;
+    }
+    resizeGlobe();
+
+    function animateGlobe() {
+        gCtx.clearRect(0, 0, gWidth, gHeight);
+        const cx = gWidth / 2; 
+        const cy = gHeight / 2;
+        rotation += 0.005;
+
+        // Proyectar puntos
+        const projected = [];
+        points.forEach(p => {
+            const xRot = p.x * Math.cos(rotation) - p.z * Math.sin(rotation);
+            const zRot = p.x * Math.sin(rotation) + p.z * Math.cos(rotation);
+            const scale = 300 / (300 + zRot);
+            projected.push({
+                x: cx + xRot * scale,
+                y: cy + p.y * scale,
+                z: zRot,
+                scale: scale,
+                active: p.active
+            });
+        });
+
+        // Dibujar lineas (Red neuronal)
+        gCtx.strokeStyle = 'rgba(0, 243, 255, 0.15)';
+        gCtx.lineWidth = 0.5;
+        for(let i=0; i<projected.length; i++) {
+            if(projected[i].z < -50) continue; // No dibujar parte trasera
+            for(let j=i+1; j<projected.length; j++) {
+                const d = Math.hypot(projected[i].x - projected[j].x, projected[i].y - projected[j].y);
+                if(d < 25) {
+                    gCtx.beginPath();
+                    gCtx.moveTo(projected[i].x, projected[i].y);
+                    gCtx.lineTo(projected[j].x, projected[j].y);
+                    gCtx.stroke();
+                }
+            }
+        }
+
+        // Dibujar nodos
+        projected.forEach(p => {
+            if(p.z > -50) {
+                gCtx.beginPath();
+                gCtx.arc(p.x, p.y, 1.5 * p.scale, 0, Math.PI*2);
+                gCtx.fillStyle = p.active ? (Math.random()>0.5 ? '#fff' : '#f00') : '#0ff';
+                gCtx.fill();
+                
+                // Efecto brillo en nodos activos
+                if(p.active && Math.random() > 0.8) {
+                    gCtx.beginPath();
+                    gCtx.arc(p.x, p.y, 4 * p.scale, 0, Math.PI*2);
+                    gCtx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+                    gCtx.fill();
+                }
+            }
+        });
+
+        // Actualizar coordenadas fake
+        document.getElementById('lat-val').innerText = (Math.sin(rotation)*90).toFixed(2);
+        document.getElementById('lon-val').innerText = (Math.cos(rotation)*180).toFixed(2);
+        
+        requestAnimationFrame(animateGlobe);
+    }
+    animateGlobe();
+
+    /* =========================================
+       8. EXTRAS UI
+       ========================================= */
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('clock').textContent = now.toLocaleTimeString('en-US', {hour12: false});
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Random CPU Graph
+    const cpuContainer = document.getElementById('cpu-main');
+    for(let i=0; i<30; i++) {
+        const bar = document.createElement('div');
+        bar.className = 'bar';
+        bar.style.height = Math.random() * 80 + '%';
+        cpuContainer.appendChild(bar);
+    }
+    setInterval(() => {
+        document.querySelectorAll('.cpu-graph .bar').forEach(bar => {
+            bar.style.height = Math.random() * 100 + '%';
+        });
+        document.getElementById('cpu-val').innerText = Math.floor(Math.random() * 50 + 10) + "%";
+        document.querySelector('.mem-used').innerText = (8 + Math.random()).toFixed(1) + "GB";
+        document.getElementById('mem-bar').style.width = (Math.random()*20 + 30) + "%";
+        
+        // Random Polyline Network Traffic
+        const poly = document.getElementById('net-poly');
+        let points = "0,80 ";
+        for(let i=1; i<10; i++) {
+            points += `${i*30},${80 - Math.random()*60} `;
+        }
+        points += "300,80";
+        poly.setAttribute('points', points);
+
+    }, 800);
+
+    // Tabs logic
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            playBeep();
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            const term = document.querySelector('.main-terminal');
+            const noise = document.getElementById('noise-canvas');
+            
+            // Efecto cambio pestaña
+            term.style.opacity = '0.5';
+            setTimeout(() => term.style.opacity = '1', 100);
+
+            if(tab.innerText === 'SECURE') {
+                noise.style.opacity = '0.2'; // Activar ruido visual
+                // Simular cámara de vigilancia
+                const noiseCtx = noise.getContext('2d');
+                noise.width = noise.parentElement.offsetWidth;
+                noise.height = noise.parentElement.offsetHeight;
+                
+                function drawNoise() {
+                    const w = noise.width, h = noise.height;
+                    const idata = noiseCtx.createImageData(w, h);
+                    const buffer32 = new Uint32Array(idata.data.buffer);
+                    for (let i = 0; i < buffer32.length; i++) {
+                        if (Math.random() < 0.1) buffer32[i] = 0xffffffff;
+                    }
+                    noiseCtx.putImageData(idata, 0, 0);
+                    if(tab.innerText === 'SECURE') requestAnimationFrame(drawNoise);
+                    else noiseCtx.clearRect(0,0,w,h);
+                }
+                drawNoise();
+                termContent.innerHTML = "<div class='output' style='color:#f55'>[SECURE CHANNEL ESTABLISHED]</div><div class='output'>Camera Feed #04: NO SIGNAL</div>";
+                createInputLine();
+            } else {
+                noise.style.opacity = '0.05';
+            }
+        });
+    });
+
+    document.querySelectorAll('.icon-item').forEach(icon => {
+        icon.addEventListener('click', () => {
+            const action = icon.getAttribute('data-action');
+            if(action === 'MUTE') { toggleMute(); return; }
+            playBeep();
+            
+            // Visual feedback
+            icon.style.transform = "scale(0.9)";
+            setTimeout(()=> icon.style.transform = "scale(1)", 100);
+
+            switch(action) {
+                case 'APPS': 
+                     const apps = "<div class='system-msg'>Installed Modules:</div> - Terminal v4.0<br>- NetCrawler v2.1<br>- HashBreaker<br>- Doom (corrupted)";
+                     typeWriter(document.createElement('div'), apps, 10, createInputLine);
+                     termContent.appendChild(document.createElement('div'));
+                     break;
+                case 'FILES': processCommand('ls'); break;
+                case 'DISK': 
+                     termContent.innerHTML += "<div class='output'>/dev/sda1 [Encrypted] 45% Used</div>";
+                     createInputLine(); break;
+                case 'TERM': 
+                     processCommand('clear'); break;
+                case 'SETTINGS': 
+                     alert("ACCESS DENIED: Administrator privileges required."); break;
+                case 'DB': 
+                     processCommand('hack localhost'); break;
+                case 'NET': 
+                     processCommand('nmap 192.168.1.1'); break;
+            }
+        });
+    });
+
+</script>
+</body>
+</html>

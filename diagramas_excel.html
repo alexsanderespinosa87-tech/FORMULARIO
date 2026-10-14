@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historia de Usuario.....</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Librería para generar PDF directamente -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Librería para generar Imágenes (Canvas) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body {
+            background-color: #f3f4f6;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+            /* Suavizado de fuentes para monitores 4K */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .excel-table {
+            border-collapse: collapse;
+            width: 100%;
+            background-color: white;
+            border: 2px solid #000;
+        }
+        .excel-table td, .excel-table th {
+            border: 1px solid #999;
+            padding: 10px; /* Un poco más de aire para HD */
+            font-size: 15px; /* Texto ligeramente más grande para legibilidad en 4K */
+        }
+        .header-cell {
+            background-color: #ffffff;
+            font-weight: bold;
+            text-align: center;
+            font-size: 20px !important;
+            border-bottom: 2px solid #000 !important;
+        }
+        .label-cell {
+            font-weight: bold;
+            background-color: #f9fafb;
+            width: 25%;
+        }
+        .content-cell {
+            width: 25%;
+        }
+        .section-header {
+            font-weight: bold;
+            background-color: #f3f4f6;
+            border-top: 2px solid #000 !important;
+        }
+        .text-area {
+            height: 150px;
+            vertical-align: top;
+            line-height: 1.6;
+            text-align: justify;
+        }
+        .observations {
+            height: 180px;
+            vertical-align: top;
+            line-height: 1.6;
+        }
+        ul {
+            margin-left: 20px;
+            list-style-type: disc;
+        }
+        .print-btn {
+            background-color: #107c41; /* Excel Green por defecto */
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.1s;
+            font-size: 16px;
+            border: none;
+        }
+        .print-btn:hover {
+            filter: brightness(90%);
+        }
+        .print-btn:active {
+            transform: scale(0.98);
+        }
+        
+        /* Estilos de Alta Resolución para Impresión/PDF */
+        @media print {
+            @page {
+                size: A4; /* Mantiene formato estándar */
+                margin: 0.8cm;
+            }
+            body {
+                background-color: white;
+                padding: 0;
+                margin: 0;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                zoom: 100%; /* Asegura escala 1:1 nítida */
+            }
+            /* Sobrescribe el ancho para usar todo el papel disponible */
+            .max-w-screen-2xl {
+                max-width: 100% !important;
+                width: 100% !important;
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0 !important;
+            }
+            .print-btn, .flex.justify-between {
+                display: none !important;
+            }
+            .text-area, .observations {
+                height: auto !important; 
+                min-height: 150px;
+            }
+            /* Ajuste de fuentes para impresión de alta calidad */
+            .excel-table td, .excel-table th {
+                border: 1px solid #000 !important; /* Bordes negros sólidos para nitidez */
+            }
+        }
+    </style>
+    <script>
+        function generarPDF() {
+            const elemento = document.querySelector('.max-w-screen-2xl');
+            const headerDiv = document.querySelector('.flex.justify-between');
+            const originalDisplay = headerDiv.style.display;
+            headerDiv.style.display = 'none';
+
+            const opciones = {
+                margin:       [10, 10, 10, 10],
+                filename:     'Historia_Usuario_AnimalCare.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opciones).from(elemento).save().then(() => {
+                headerDiv.style.display = originalDisplay;
+            });
+        }
+
+        function generarImagen() {
+            const elemento = document.querySelector('.max-w-screen-2xl');
+            const headerDiv = document.querySelector('.flex.justify-between');
+            const originalDisplay = headerDiv.style.display;
+            
+            // Ocultamos los botones para la foto
+            headerDiv.style.display = 'none';
+
+            html2canvas(elemento, {
+                scale: 4, // Escala 4x para resolución ultra alta (4K)
+                useCORS: true,
+                backgroundColor: '#ffffff', // Fondo blanco puro
+                logging: false
+            }).then(canvas => {
+                // Crear un enlace temporal para la descarga
+                const link = document.createElement('a');
+                link.download = 'Historia_Usuario_AnimalCare_4K.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                
+                // Restaurar botones
+                headerDiv.style.display = originalDisplay;
+            }).catch(err => {
+                console.error(err);
+                alert('Error al generar la imagen');
+                headerDiv.style.display = originalDisplay;
+            });
+        }
+    </script>
+</head>
+<body>
+
+    <div class="max-w-screen-2xl mx-auto bg-white p-6 shadow-2xl border border-gray-300">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-700">Vista de Hoja de Cálculo - AnimalCare</h2>
+            <div class="flex gap-3">
+                <!-- Botón Imagen -->
+                <button class="print-btn" style="background-color: #0078d4;" onclick="generarImagen()">
+                    📷 Descargar Imagen (4K)
+                </button>
+                <!-- Botón PDF -->
+                <button class="print-btn" onclick="generarPDF()">
+                    📄 Descargar PDF
+                </button>
+            </div>
+        </div>
+
+        <table class="excel-table">
+            <!-- Header Principal -->
+            <tr>
+                <td colspan="4" class="header-cell">Historia de Usuario: Gestión de Citas y Consultas</td>
+            </tr>
+            
+            <!-- Metadata Fila 1 -->
+            <tr>
+                <td class="label-cell">Numero:</td>
+                <td class="content-cell">HU-03</td>
+                <td class="label-cell" colspan="1"></td>
+                <td class="label-cell">Nombre: <span class="font-normal">Programación de Citas</span></td>
+            </tr>
+            
+            <!-- Metadata Fila 2 -->
+            <tr>
+                <td class="label-cell">Usuario (Actor):</td>
+                <td class="content-cell">Recepcionista</td>
+                <td class="label-cell" colspan="1"></td>
+                <td class="label-cell">Fuente: <span class="font-normal">Diagrama de Contexto</span></td>
+            </tr>
+            
+            <!-- Metadata Fila 3 -->
+            <tr>
+                <td class="label-cell" colspan="1"></td>
+                <td class="content-cell" colspan="1"></td>
+                <td class="label-cell" colspan="1"></td>
+                <td class="label-cell">Interacción asignada: <span class="font-normal">Programa citas / Registra consultas</span></td>
+            </tr>
+
+            <!-- Modificaciones -->
+            <tr>
+                <td class="label-cell">Modificaciones de historia de usuario:</td>
+                <td class="content-cell">AnimalCare Quito: Sistema de Gestión Veterinaria</td>
+                <td class="label-cell">Dependencias:</td>
+                <td class="content-cell">Lista de pacientes / Agenda</td>
+            </tr>
+
+            <!-- Prioridad y Puntos -->
+            <tr>
+                <td class="label-cell">Prioridad en el negocio: <span class="font-normal">Alta</span></td>
+                <td class="content-cell">Crítico para operación</td>
+                <td class="label-cell"></td>
+                <td class="label-cell">Puntos estimados: <span class="font-normal">8</span></td>
+            </tr>
+
+            <!-- Riesgo -->
+            <tr>
+                <td class="label-cell">Riesgo en desarrollo: <span class="font-normal">Medio</span></td>
+                <td class="content-cell">Integración con Email</td>
+                <td class="label-cell"></td>
+                <td class="label-cell">Puntos reales: <span class="font-normal">--</span></td>
+            </tr>
+            
+            <!-- Separador vacío -->
+            <tr>
+                <td class="content-cell"></td>
+                <td class="content-cell"></td>
+                <td class="content-cell"></td>
+                <td class="content-cell"></td>
+            </tr>
+
+            <!-- Sección Descripción -->
+            <tr>
+                <td colspan="4" class="section-header">Descripción</td>
+            </tr>
+            <tr>
+                <td colspan="4" class="text-area">
+                    <strong>Como</strong> Recepcionista de AnimalCare, <strong>quiero</strong> interactuar con el Sistema de Gestión Veterinaria para ejecutar los procesos de <strong>programación de citas</strong> y <strong>registro de consultas</strong>, <strong>para</strong> garantizar un flujo de atención ordenado y eficiente tanto para el equipo médico como para los clientes.
+                    <br><br>
+                    <strong>Flujo detallado de interacción:</strong>
+                    <br>
+                    1. <strong>Consulta y Validación:</strong> El sistema debe permitirme visualizar la <strong>"Agenda"</strong> global para identificar disponibilidades. Previo a cualquier registro, el sistema debe exigirme consultar la <strong>"Lista de pacientes"</strong>; si el paciente no existe en la base de datos, el sistema debe bloquear el agendamiento hasta que se realice el registro correspondiente.
+                    <br><br>
+                    2. <strong>Registro de Transacción:</strong> Una vez validado el paciente, ingresaré los detalles (fecha, hora, motivo). El sistema debe diferenciar entre <strong>"Programa citas"</strong> (para eventos futuros que disparan recordatorios) y <strong>"Registra consultas"</strong> (para pacientes que llegan físicamente a la clínica en ese momento).
+                    <br><br>
+                    3. <strong>Disparadores:</strong> Al guardar exitosamente, el sistema debe actualizar automáticamente la base de datos central, reflejar el cambio en los reportes del Veterinario y activar el conector con el Servicio de Email.
+                </td>
+            </tr>
+
+            <!-- Sección Observación -->
+            <tr>
+                <td colspan="4" class="section-header">Observación (Flujos del Diagrama)</td>
+            </tr>
+            <tr>
+                <td colspan="4" class="observations">
+                    <ul>
+                        <li><strong>Entradas del Sistema:</strong> La funcionalidad depende estrictamente de recibir la "Lista de pacientes" y la visualización de la "Agenda" desde el Sistema de Gestión Veterinaria.</li>
+                        <li><strong>Salidas del Actor:</strong> La Recepcionista ejecuta dos acciones principales hacia el sistema: "Programa citas" (para futuros eventos) y "Registra consultas" (para la gestión del momento o llegada).</li>
+                        <li><strong>Coherencia de Datos:</strong> No se puede registrar una consulta sin validar primero la existencia del paciente en la lista proporcionada por el sistema.</li>
+                        <li><strong>Integración:</strong> Estos flujos desencadenan procesos posteriores hacia el Veterinario ("Citas del día") y Servicio de Email.</li>
+                    </ul>
+                </td>
+            </tr>
+        </table>
+
+        <div class="mt-4 p-4 bg-green-50 border-l-4 border-green-500 text-sm italic text-green-700">
+            <strong>Nota de Diagrama:</strong> Los datos de interacción y dependencias corresponden exactamente a las flechas de entrada y salida de la entidad <em>Recepcionista</em> en el diagrama de contexto.
+        </div>
+    </div>
+
+</body>
+</html>

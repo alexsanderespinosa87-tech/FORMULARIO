@@ -1,0 +1,1863 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sistema Restaurante - Alexsander Pro</title>
+    <!-- Librería para generar Excel (SheetJS) -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <style>
+        /* --- 1. ESTILOS DEL ENTORNO --- */
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: #e0e0e0; 
+            display: flex; 
+            justify-content: center;
+            align-items: center; 
+            height: 100vh;
+            margin: 0;
+            color: #333; 
+            overflow: hidden; 
+        }
+
+        /* --- 2. MONITOR (Contenedor Principal) --- */
+        .monitor {
+            background: #111;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+            position: relative;
+            width: 1200px;
+            height: 750px;
+            transition: all 0.3s ease;
+        }
+
+        .pantalla {
+            background: url('https://images.unsplash.com/photo-1552566626-52f8b828add9?q=80&w=2070&auto=format&fit=crop') no-repeat center center;
+            background-size: cover;
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- 3. ESTILOS LOGIN --- */
+        #loginArea {
+            width: 100%; height: 100%; position: absolute; top: 0; left: 0;
+            display: flex; justify-content: center; align-items: center;
+            backdrop-filter: blur(8px); 
+            z-index: 50; 
+            background: rgba(0,0,0,0.6); 
+        }
+
+        .login-box {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px; border: 5px solid #ff6600; border-radius: 12px;
+            width: 90%; max-width: 320px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+
+        .login-box h2 { color: #ff6600; margin: 0 0 20px 0; letter-spacing: 2px; }
+        .login-box input { width: 100%; padding: 12px; margin: 5px 0 15px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
+        
+        .auth-links { margin-top: 20px; font-size: 0.85em; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid #eee; padding-top: 10px; }
+        .auth-links a { color: #007bff; text-decoration: none; cursor: pointer; transition: color 0.2s; }
+
+        /* --- 4. SISTEMA INTERNO --- */
+        #sistemaVentas {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            background: rgba(244, 246, 249, 0.95); 
+        }
+
+        /* HEADER */
+        .header-bar {
+            background: #fff;
+            padding: 15px 20px;
+            display: flex; 
+            flex-direction: column;
+            gap: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            flex-shrink: 0;
+        }
+
+        .header-top-row {
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            width: 100%;
+        }
+
+        .nav-buttons { display: flex; gap: 10px; flex-wrap: wrap; width: 100%; }
+        
+        .btn-nav {
+            background: #f8f9fa; border: 1px solid #ddd; font-weight: bold; color: #555; cursor: pointer;
+            font-size: 0.9em; padding: 8px 15px; border-radius: 20px; transition: all 0.2s; display: flex; align-items: center; gap: 5px;
+        }
+        .btn-nav:hover { background: #007bff; color: white; border-color: #007bff; }
+        .btn-nav.danger:hover { background: #dc3545; color: white; border-color: #dc3545; }
+        .btn-nav.info:hover { background: #17a2b8; color: white; border-color: #17a2b8; }
+
+        /* GRID PRINCIPAL */
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            padding: 15px;
+            gap: 15px;
+        }
+
+        .products-section { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: transparent; }
+
+        /* BUSCADOR Y CATEGORIAS */
+        .filters-container { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .search-box {
+            flex: 1;
+            padding: 10px 15px;
+            border-radius: 20px;
+            border: 1px solid #ddd;
+            outline: none;
+            font-size: 1em;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .category-bar { display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; padding-bottom: 5px; -webkit-overflow-scrolling: touch; }
+        .category-bar::-webkit-scrollbar { display: none; } 
+        
+        .cat-btn {
+            padding: 8px 15px; border-radius: 20px; background: white; border: 1px solid #ddd;
+            cursor: pointer; white-space: nowrap; font-weight: bold; font-size: 0.9em; color: #555;
+            transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .cat-btn:hover { transform: translateY(-2px); }
+        .cat-btn.active { background: #ff6600; color: white; border-color: #ff6600; }
+
+        .stats-bar {
+            display: flex; gap: 15px; margin-bottom: 10px;
+            background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            font-size: 0.85em; justify-content: space-around;
+            flex-wrap: wrap;
+        }
+
+        /* GRID PRODUCTOS */
+        .products-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 10px; overflow-y: auto; padding-right: 5px; padding-bottom: 10px;
+        }
+
+        .product-card {
+            background: white; border-radius: 12px; overflow: hidden;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1); transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer; display: flex; flex-direction: column; position: relative;
+        }
+        .product-card:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.15); }
+        .product-card:active { transform: scale(0.98); }
+        .product-card.agotado { opacity: 0.6; pointer-events: none; filter: grayscale(1); }
+
+        .card-img-container { width: 100%; height: 90px; background: #eee; overflow: hidden; position: relative; }
+        .card-img { width: 100%; height: 100%; object-fit: cover; }
+        .card-cat-badge {
+            position: absolute; top: 5px; left: 5px; background: rgba(0,0,0,0.6); color: white;
+            font-size: 0.6em; padding: 2px 6px; border-radius: 4px; text-transform: uppercase;
+        }
+        .stock-badge {
+            position: absolute; bottom: 0; right: 0; background: rgba(255,255,255,0.9); 
+            color: #333; font-size: 0.7em; padding: 2px 6px; border-top-left-radius: 4px; font-weight: bold;
+        }
+        .card-info { padding: 8px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        .card-title { font-weight: bold; font-size: 0.85em; margin-bottom: 4px; color: #333; line-height: 1.2; }
+        .card-price { color: #ff6600; font-weight: bold; font-size: 1.1em; }
+        .card-add {
+            position: absolute; bottom: 8px; right: 8px; background: #28a745; color: white; width: 28px; height: 28px;
+            border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        /* COLUMNA DERECHA (CARRITO) */
+        .order-section {
+            width: 380px; background: white; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            display: flex; flex-direction: column; overflow: hidden; border-top: 5px solid #ff8c00;
+            flex-shrink: 0;
+        }
+
+        .order-header { padding: 15px; background: #f8f9fa; border-bottom: 1px solid #eee; }
+        .compact-form { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+        .row-compact { display: flex; gap: 5px; }
+        .input-compact { padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9em; width: 100%; }
+        .label-compact { font-size: 0.7em; color: #777; font-weight: bold; margin-bottom: 2px; }
+
+        .cart-container { flex: 1; overflow-y: auto; padding: 0; background: #fff; min-height: 150px; }
+        .cart-table { width: 100%; border-collapse: collapse; }
+        .cart-table th { background: #f1f1f1; padding: 8px; font-size: 0.75em; text-align: left; color: #555; position: sticky; top: 0; z-index: 10; }
+        .cart-table td { padding: 8px; border-bottom: 1px solid #f5f5f5; font-size: 0.85em; vertical-align: top; }
+        .item-note { display: block; font-size: 0.75em; color: #888; font-style: italic; margin-top: 2px; }
+
+        .order-footer { padding: 15px; background: #fdfdfd; border-top: 1px solid #eee; }
+        .total-display { display: flex; justify-content: space-between; align-items: center; font-size: 1.4em; font-weight: bold; color: #333; margin-bottom: 10px; }
+        .total-amount { color: #28a745; }
+        .pay-controls { display: flex; flex-direction: column; gap: 8px; }
+        .btn-action { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1em; }
+        .btn-pay { background: #28a745; color: white; box-shadow: 0 4px 0 #218838; }
+        .btn-pay:active { transform: translateY(2px); box-shadow: 0 2px 0 #218838; }
+        .btn-kitchen { background: #17a2b8; color: white; font-size: 0.9em; padding: 8px; flex: 1; }
+        .btn-precheck { background: #6c757d; color: white; font-size: 0.9em; padding: 8px; flex: 1; }
+
+        /* TOAST NOTIFICATION */
+        #toast-container { position: absolute; top: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 10px; }
+        .toast {
+            background: #333; color: white; padding: 12px 20px; border-radius: 4px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); font-size: 0.9em;
+            display: flex; align-items: center; gap: 10px; animation: slideIn 0.3s ease-out;
+        }
+        .toast.success { border-left: 4px solid #28a745; }
+        .toast.error { border-left: 4px solid #dc3545; }
+        .toast.info { border-left: 4px solid #17a2b8; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        /* MODALES */
+        .modal-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 100; justify-content: center; align-items: center; }
+        .modal-caja { background: white; padding: 30px; border-radius: 10px; border: 2px solid #28a745; text-align: center; width: 90%; max-width: 350px; }
+        .modal-grande { background: #f4f6f9; padding: 20px; width: 90%; max-width: 800px; max-height: 85vh; overflow-y: auto; border-radius: 8px; border-top: 5px solid #ff8c00; }
+        .product-thumb-small { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; }
+        
+        button { cursor: pointer; }
+        .text-verde { color: #28a745; } .text-azul { color: #007bff; } .text-morado { color: #6f42c1; }
+        .client-details { display: none; padding: 8px; background: #f1f1f1; border-radius: 4px; margin-bottom: 5px; font-size: 0.85em; }
+        .toggle-details { color: #007bff; font-size: 0.75em; text-decoration: underline; cursor: pointer; margin-left: 5px; }
+        
+        /* ESTILO TABLAS */
+        .tabla-comun { width: 100%; border-collapse: collapse; margin-top:10px; }
+        .tabla-comun th { text-align:left; background:#e9ecef; padding:10px; font-size:0.9em; }
+        .tabla-comun td { padding:10px; border-bottom:1px solid #ddd; background: white; }
+        .btn-ir-mesa { background: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 0.8em; }
+
+        /* ARQUEO & HISTORIAL */
+        .arqueo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .arqueo-col h5 { margin: 5px 0 10px 0; border-bottom: 2px solid #ddd; padding-bottom: 5px; }
+        .input-arqueo-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; font-size: 0.9em; }
+        .input-arqueo-row input { width: 60px; text-align: center; padding: 4px; border: 1px solid #ccc; border-radius: 4px; }
+        .resumen-arqueo { background: #333; color: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+        .resumen-arqueo div { display: flex; justify-content: space-between; margin-bottom: 5px; }
+
+        .filtros-historial { display: flex; gap: 10px; background: #ddd; padding: 10px; border-radius: 6px; margin-bottom: 10px; align-items: center; flex-wrap: wrap; }
+        .filtros-historial input { padding: 6px; border-radius: 4px; border: 1px solid #ccc; }
+        .filtros-historial button { padding: 6px 12px; background: #007bff; color: white; border: none; border-radius: 4px; }
+        
+        /* ESTILO EDICIÓN PRODUCTO */
+        .input-edit { width: 70px; padding: 4px; border: 1px solid #ccc; border-radius: 4px; }
+
+        /* --- 5. RESPONSIVE DESIGN --- */
+        @media (max-width: 1024px) {
+            body { 
+                background: #111; 
+                height: 100%;
+                overflow: auto;
+            }
+            .monitor {
+                width: 100% !important;
+                height: 100vh !important;
+                border-radius: 0;
+                padding: 0;
+                box-shadow: none;
+            }
+            .pantalla { border-radius: 0; }
+            .main-container {
+                flex-direction: column;
+                overflow-y: auto;
+                padding: 10px;
+                gap: 10px;
+            }
+            .order-section {
+                width: 100%;
+                border-top: none;
+                border-left: none;
+                border-top: 4px solid #ff8c00;
+                height: auto;
+                max-height: none; 
+                flex-shrink: 0;
+                order: 2; 
+            }
+            .products-section {
+                flex: 1; 
+                min-height: 400px;
+                order: 1;
+            }
+            .cart-container {
+                min-height: 150px;
+                max-height: 250px;
+            }
+            .header-bar h3 { font-size: 1.2em; }
+            .nav-buttons .btn-nav { padding: 8px 12px; font-size: 0.85em; flex: 1; justify-content: center; }
+        }
+
+        @media (max-width: 480px) {
+            .stats-bar { font-size: 0.75em; gap: 5px; padding: 5px; }
+            .products-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; }
+            .card-img-container { height: 70px; }
+            .login-box { width: 85%; padding: 20px; }
+            .modal-grande { width: 95%; padding: 15px; }
+            .arqueo-grid { grid-template-columns: 1fr; }
+            .header-bar { padding: 10px; }
+            .card-title { font-size: 0.8em; }
+            .card-price { font-size: 1em; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="monitor">
+        <div class="pantalla">
+            <!-- TOAST CONTAINER -->
+            <div id="toast-container"></div>
+
+            <!-- LOGIN -->
+            <div id="loginArea">
+                <div class="login-box">
+                    <h2>ALEXSANDER PRO</h2>
+                    <input type="text" id="userIn" placeholder="Usuario" style="margin-bottom:10px; width:100%; padding:10px;">
+                    <input type="password" id="passIn" placeholder="Contraseña" style="margin-bottom:10px; width:100%; padding:10px;">
+                    <button onclick="verificarAcceso()" class="btn-action btn-pay" style="background:#0056b3; box-shadow:none;">ENTRAR</button>
+                    <p id="errorMsg" style="color: red; display: none; margin-top: 10px;">Credenciales incorrectas</p>
+                    
+                    <div class="auth-links">
+                        <a onclick="abrirModalRegistro()">Registrar Cajero</a>
+                        <a onclick="abrirModalOlvidoPass()">Recuperar Clave</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODALES AUTH (Registro/Recuperar) -->
+            <div id="modalRegistro" class="modal-overlay">
+                <div class="modal-caja" style="border-color:#007bff">
+                    <h3>Nuevo Cajero</h3>
+                    <input type="text" id="regUser" placeholder="Usuario" style="width:100%; margin-bottom:5px; padding:8px;">
+                    <input type="password" id="regPass" placeholder="Clave" style="width:100%; margin-bottom:5px; padding:8px;">
+                    <input type="number" id="regPin" placeholder="PIN (4 dígitos)" style="width:100%; margin-bottom:10px; padding:8px;">
+                    <button onclick="registrarUsuario()" class="btn-action" style="background:#28a745; color:white;">Guardar</button>
+                    <button onclick="cerrarModal('modalRegistro')" style="margin-top:5px; border:none; background:none; color:red;">Cancelar</button>
+                </div>
+            </div>
+            
+            <div id="modalOlvidoPass" class="modal-overlay">
+                <div class="modal-caja" style="border-color:#dc3545">
+                    <h3>Recuperar</h3>
+                    <input type="text" id="recPassUser" placeholder="Usuario" style="width:100%; margin-bottom:5px; padding:8px;">
+                    <input type="number" id="recPassPin" placeholder="PIN de Seguridad" style="width:100%; margin-bottom:5px; padding:8px;">
+                    <input type="password" id="recPassNew" placeholder="Nueva Clave" style="width:100%; margin-bottom:10px; padding:8px;">
+                    <button onclick="recuperarContrasena()" class="btn-action" style="background:#dc3545; color:white;">Cambiar</button>
+                    <button onclick="cerrarModal('modalOlvidoPass')" style="margin-top:5px; border:none; background:none; color:#555;">Cancelar</button>
+                </div>
+            </div>
+
+            <!-- APERTURA CAJA -->
+            <div id="modalApertura" class="modal-overlay">
+                <div class="modal-caja">
+                    <h2 class="text-verde">APERTURA DE TURNO</h2>
+                    <p>Fondo Inicial de Caja</p>
+                    <input type="number" id="montoInicialInput" placeholder="$0.00" style="font-size: 2em; text-align: center; width:100%; margin-bottom: 15px; border:none; border-bottom:2px solid #28a745;">
+                    <button onclick="confirmarApertura()" class="btn-action btn-pay">ABRIR CAJA</button>
+                </div>
+            </div>
+
+            <!-- SISTEMA PRINCIPAL -->
+            <div id="sistemaVentas">
+                
+                <!-- HEADER BAR -->
+                <div class="header-bar">
+                    
+                    <!-- Fila 1: Título y Usuario -->
+                    <div class="header-top-row">
+                        <h3 style="margin:0; color:#ff6600; font-style:italic; font-size:1.4em;">ALEXSANDER PRO</h3>
+                        
+                        <div style="font-size:0.9em; text-align: right;">
+                            <span id="userDisplay" style="font-weight:bold; color:#555; margin-right:10px;"></span>
+                            <span id="reloj" style="font-weight:bold; color:#888;">00:00:00</span>
+                            <button onclick="cerrarSesion()" style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:4px; margin-left:10px;">Salir</button>
+                        </div>
+                    </div>
+
+                    <!-- Fila 2: Botones de Navegación -->
+                    <div class="nav-buttons">
+                        <button class="btn-nav info" onclick="abrirModalPendientes()">⏳ Pend.</button>
+                        <button class="btn-nav" onclick="abrirModalClientes()">👥 Clientes</button>
+                        <button class="btn-nav" onclick="abrirModalProductos()">📦 Stock / Menú</button>
+                        <button class="btn-nav danger" onclick="abrirCierreCaja()">🔒 Cierre</button>
+                    </div>
+
+                </div>
+
+                <!-- CONTENIDO PRINCIPAL -->
+                <div class="main-container">
+                    
+                    <!-- IZQUIERDA: PRODUCTOS VISUALES -->
+                    <div class="products-section">
+                        <div class="stats-bar">
+                            <div>Fondo: <b id="displayFondo" class="text-azul">$0.00</b></div>
+                            <div>Efec: <b id="displayVentasEfectivo" class="text-verde">$0.00</b></div>
+                            <div>Tarj: <b id="displayTarjeta" class="text-morado">$0.00</b></div>
+                            <div>Trans: <b id="displayTrans" style="color:#ff8c00;">$0.00</b></div>
+                        </div>
+
+                        <!-- BUSCADOR Y CATEGORÍAS -->
+                        <div class="filters-container">
+                            <input type="text" id="buscadorProductos" class="search-box" placeholder="🔍 Buscar plato..." onkeyup="filtrarProductos()">
+                        </div>
+                        <div class="category-bar" id="categoryTabs">
+                            <button class="cat-btn active" onclick="filtrarCategoria('Todos')">Todos</button>
+                            <button class="cat-btn" onclick="filtrarCategoria('Entradas')">Entradas</button>
+                            <button class="cat-btn" onclick="filtrarCategoria('Platos')">Platos</button>
+                            <button class="cat-btn" onclick="filtrarCategoria('Postres')">Postres</button>
+                            <button class="cat-btn" onclick="filtrarCategoria('Bebidas')">Bebidas</button>
+                            <button class="cat-btn" onclick="filtrarCategoria('Domicilios')">Domicilios</button>
+                            <button class="cat-btn" onclick="filtrarCategoria('Extras')">Extras</button>
+                        </div>
+
+                        <!-- Grid de Productos -->
+                        <div id="gridProductos" class="products-grid"></div>
+                    </div>
+
+                    <!-- DERECHA: TICKET / PEDIDO -->
+                    <div class="order-section">
+                        <div class="order-header">
+                            <div class="compact-form">
+                                <div class="row-compact">
+                                    <div style="flex:1">
+                                        <div class="label-compact">MESA</div>
+                                        <select id="selectMesa" class="input-compact" style="background:#fff3cd; font-weight:bold;">
+                                            <option value="BARRA">BARRA</option>
+                                            <option value="MESA 1">MESA 1</option>
+                                            <option value="MESA 2">MESA 2</option>
+                                            <option value="MESA 3">MESA 3</option>
+                                            <option value="MESA 4">MESA 4</option>
+                                            <option value="LLEVAR">LLEVAR</option>
+                                        </select>
+                                    </div>
+                                    <div style="flex:1">
+                                        <div class="label-compact">CÉDULA/RUC</div>
+                                        <input type="number" id="clienteRuc" class="input-compact" placeholder="9999999999" onchange="buscarCliente(this.value)">
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="label-compact">CLIENTE <span class="toggle-details" onclick="toggleDetalles()">[+ Detalles]</span></div>
+                                    <input type="text" id="clienteNombre" class="input-compact" placeholder="Consumidor Final">
+                                </div>
+                                <div id="detallesClienteExtra" class="client-details">
+                                    <input type="text" id="clienteTel" class="input-compact" placeholder="Teléfono" style="margin-bottom:5px;">
+                                    <input type="text" id="clienteEmail" class="input-compact" placeholder="Email" style="margin-bottom:5px;">
+                                    <input type="text" id="clienteDir" class="input-compact" placeholder="Dirección" style="margin-bottom:5px;">
+                                    
+                                    <button onclick="guardarClienteActual()" style="width:100%; background:#28a745; color:white; border:none; padding:6px; border-radius:4px; font-weight:bold; cursor:pointer; margin-top:5px;">
+                                        💾 Guardar/Actualizar Cliente
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="cart-container">
+                            <table class="cart-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width:30px">Cnt</th>
+                                        <th>Descripción</th>
+                                        <th style="text-align:right">Total</th>
+                                        <th style="width:40px">Acc</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cartBody"></tbody>
+                            </table>
+                        </div>
+
+                        <div class="order-footer">
+                            <div style="display:flex; justify-content:space-between; font-size:0.8em; color:#777; margin-bottom:5px;">
+                                <span>Subtotal: <span id="lblSubtotal">$0.00</span></span>
+                                <span>IVA (15%): <span id="lblIva">$0.00</span></span>
+                            </div>
+                            <div class="total-display">
+                                <span>TOTAL</span>
+                                <span class="total-amount" id="montoTotal">$0.00</span>
+                            </div>
+                            
+                            <div class="pay-controls">
+                                <div class="row-compact">
+                                    <select id="metodoPago" class="input-compact" style="flex:1; font-weight:bold;">
+                                        <option value="Efectivo">💵 Efectivo</option>
+                                        <option value="Tarjeta">💳 Tarjeta</option>
+                                        <option value="Transferencia">📲 Transf.</option>
+                                    </select>
+                                    <input type="number" id="pagoRecibido" class="input-compact" style="flex:1;" placeholder="Recibido" oninput="calcularCambio()">
+                                </div>
+                                <div id="displayCambio" style="text-align:right; font-weight:bold; font-size:0.9em; color:#555; height:1.2em;"></div>
+                                
+                                <div style="display:flex; gap:5px;">
+                                    <button class="btn-action btn-kitchen" onclick="imprimirComanda()">🖨️ Cocina</button>
+                                    <button class="btn-action btn-precheck" onclick="imprimirPreCuenta()">📄 Pre-Cuenta</button>
+                                </div>
+                                <button class="btn-action btn-pay" onclick="finalizarVenta()">COBRAR</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL REPORTES / CIERRE Y ARQUEO -->
+            <div id="modalReporte" class="modal-overlay">
+                <div class="modal-grande" style="width:700px; background:white;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                        <h2>Cierre de Caja y Arqueo</h2>
+                        <button onclick="cerrarModal('modalReporte')" style="background:none; border:none; font-size:1.5em; cursor:pointer;">&times;</button>
+                    </div>
+
+                    <!-- BOTÓN EXPORTAR EXCEL SIMPLE -->
+                    <div style="text-align:center; margin-bottom: 20px;">
+                        <button onclick="generarExcelSimple()" style="background: #1d6f42; color: white; padding: 12px 20px; border: none; border-radius: 8px; font-weight: bold; font-size: 1.1em; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
+                            📊 DESCARGAR REPORTE EXCEL (Simple)
+                        </button>
+                    </div>
+                    
+                    <div style="display:flex; justify-content:space-between; margin-bottom:10px; background:#f8f9fa; padding:10px; border-radius:8px;">
+                        <div>
+                            <small>VENTA TOTAL SISTEMA</small><br>
+                            <b style="font-size:1.2em;" id="reporteTotalVenta">$0.00</b>
+                        </div>
+                        <div style="text-align:right">
+                            <small>EFECTIVO ESPERADO (FONDO + VENTAS)</small><br>
+                            <b style="font-size:1.2em; color:#28a745;" id="reporteTotalEfectivo">$0.00</b>
+                        </div>
+                    </div>
+
+                    <!-- ARQUEO DE CAJA -->
+                    <div style="border: 1px solid #ddd; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
+                        <h4 style="margin-top:0; border-bottom:1px solid #eee; padding-bottom:5px;">Conteo de Dinero Físico</h4>
+                        <div class="arqueo-grid">
+                            <div class="arqueo-col">
+                                <h5>Monedas</h5>
+                                <div class="input-arqueo-row"><label>0.01</label><input type="number" class="input-arqueo" data-val="0.01" oninput="calcularArqueo()"></div>
+                                <div class="input-arqueo-row"><label>0.05</label><input type="number" class="input-arqueo" data-val="0.05" oninput="calcularArqueo()"></div>
+                                <div class="input-arqueo-row"><label>0.10</label><input type="number" class="input-arqueo" data-val="0.10" oninput="calcularArqueo()"></div>
+                                <div class="input-arqueo-row"><label>0.25</label><input type="number" class="input-arqueo" data-val="0.25" oninput="calcularArqueo()"></div>
+                                <div class="input-arqueo-row"><label>0.50</label><input type="number" class="input-arqueo" data-val="0.50" oninput="calcularArqueo()"></div>
+                                <div class="input-arqueo-row"><label>1.00</label><input type="number" class="input-arqueo" data-val="1.00" oninput="calcularArqueo()"></div>
+                            </div>
+                            <div class="arqueo-col">
+                                <h5>Billetes</h5>
+                                <div class="input-arqueo-row"><label>$1</label><input type="number" class="input-arqueo" data-val="1" oninput="calcularArqueo()"></div>
+                                <div class="input-arqueo-row"><label>$5</label><input type="number" class="input-arqueo" data-val="5" oninput="calcularArqueo()"></div>
+                                <div class="input-arqueo-row"><label>$10</label><input type="number" class="input-arqueo" data-val="10" oninput="calcularArqueo()"></div>
+                                <div class="input-arqueo-row"><label>$20</label><input type="number" class="input-arqueo" data-val="20" oninput="calcularArqueo()"></div>
+                                <div class="input-arqueo-row"><label>$50</label><input type="number" class="input-arqueo" data-val="50" oninput="calcularArqueo()"></div>
+                                <div class="input-arqueo-row"><label>$100</label><input type="number" class="input-arqueo" data-val="100" oninput="calcularArqueo()"></div>
+                            </div>
+                        </div>
+                        <div class="resumen-arqueo">
+                            <div><span>TOTAL CONTADO:</span> <span id="lblTotalArqueo" style="font-weight:bold; font-size:1.2em;">$0.00</span></div>
+                            <div><span>DIFERENCIA:</span> <span id="lblDiferencia">$0.00</span></div>
+                        </div>
+                    </div>
+
+                    <button onclick="imprimirCierreZ()" class="btn-action" style="background:#ff8c00; color:white; margin-bottom:20px;">IMPRIMIR CIERRE Z Y SALIR</button>
+                    
+                    <!-- NUEVA SECCIÓN: VENTAS DEL DÍA (AGREGADO Y MODIFICADO) -->
+                    <div style="border-top: 2px solid #ff8c00; margin-top: 20px; padding-top: 15px; margin-bottom: 20px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <h3 style="color:#ff6600; margin:0;">📋 Ventas del Turno (Hoy)</h3>
+                            <!-- BOTÓN DE PELIGRO PARA BORRAR VENTAS -->
+                            <button onclick="resetearVentasTurno()" style="background:red; color:white; border:none; padding:5px 10px; border-radius:4px; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:5px;">
+                                ⚠️ BORRAR VENTAS
+                            </button>
+                        </div>
+                        <div style="max-height:200px; overflow-y:auto; margin-top:10px;">
+                            <table class="tabla-comun">
+                                <thead style="background:#444; color:white;">
+                                    <tr>
+                                        <th>Hora</th>
+                                        <th>Mesa</th>
+                                        <th>Cliente</th>
+                                        <th>Total</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bodyVentasDelDia"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- HISTORIAL Y FILTROS -->
+                    <div style="border-top: 2px dashed #ccc; padding-top: 15px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <h3 style="margin-top:0;">Historial de Cierres Anteriores</h3>
+                            <button onclick="resetearCierres()" style="background:#333; color:white; padding:5px 10px; border:none; border-radius:4px; font-size:0.8em;">⚠️ Borrar Historial</button>
+                        </div>
+                        
+                        <div class="filtros-historial">
+                            <label>Filtrar:</label>
+                            <input type="date" id="filtroFecha">
+                            <input type="text" id="filtroCajero" placeholder="Nombre Cajero">
+                            <button onclick="renderHistorialCierres()">🔎 Buscar</button>
+                        </div>
+
+                        <div style="max-height:200px; overflow-y:auto;">
+                            <table class="tabla-comun">
+                                <thead style="background:#333; color:white;">
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Cajero</th>
+                                        <th>Total Venta</th>
+                                        <th>Arqueo</th>
+                                        <th>Diferencia</th>
+                                        <th>Opción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bodyHistorialCierres"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- MODAL PENDIENTES -->
+            <div id="modalPendientes" class="modal-overlay">
+                <div class="modal-grande" style="width:600px; background:white;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                        <h2 style="color:#17a2b8;">Mesas Pendientes</h2>
+                        <button onclick="cerrarModal('modalPendientes')" style="background:red; color:white; padding:5px 10px; border:none; border-radius:4px;">Cerrar</button>
+                    </div>
+                    <p style="color:#666;">Seleccione una mesa para cargar su pedido y cobrar.</p>
+                    <table class="tabla-comun">
+                        <thead>
+                            <tr><th>Mesa</th><th>Cliente</th><th>Items</th><th>Total</th><th>Acción</th></tr>
+                        </thead>
+                        <tbody id="tablaPendientesBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- MODAL GESTIÓN PRODUCTOS (CON STOCK Y EDICIÓN) -->
+            <div id="modalProductos" class="modal-overlay">
+                <div class="modal-grande" style="background:white;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+                        <h2 style="color:#ff8c00;">Gestión de Inventario</h2>
+                        <div>
+                            <button onclick="resetearProductos()" style="background:#333; color:white; padding:5px 10px; border:none; border-radius:4px; margin-right:5px;">⚠️ Reiniciar Menú</button>
+                            <button onclick="cerrarModal('modalProductos')" style="background:red; color:white; padding:5px 10px; border:none; border-radius:4px;">Cerrar</button>
+                        </div>
+                    </div>
+                    
+                    <div style="background:#f1f1f1; padding:15px; border-radius:8px; margin-bottom:20px; display:grid; grid-template-columns: 1fr 1fr 0.5fr 0.5fr 1.5fr 0.5fr auto; gap:10px; align-items:end;">
+                        <div>
+                            <label style="font-size:0.8em; font-weight:bold;">Nombre Producto</label>
+                            <input type="text" id="newProdName" class="input-compact" placeholder="Ej: Hamburguesa">
+                        </div>
+                        <div>
+                            <label style="font-size:0.8em; font-weight:bold;">Categoría</label>
+                            <select id="newProdCat" class="input-compact">
+                                <option value="Entradas">Entradas</option>
+                                <option value="Platos">Platos</option>
+                                <option value="Postres">Postres</option>
+                                <option value="Bebidas">Bebidas</option>
+                                <option value="Domicilios">Domicilios</option>
+                                <option value="Extras">Extras</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size:0.8em; font-weight:bold;">Precio</label>
+                            <input type="number" id="newProdPrice" class="input-compact" placeholder="0.00">
+                        </div>
+                        <div>
+                            <label style="font-size:0.8em; font-weight:bold;">Stock</label>
+                            <input type="number" id="newProdStock" class="input-compact" placeholder="100">
+                        </div>
+                        <div>
+                            <label style="font-size:0.8em; font-weight:bold;">URL Imagen</label>
+                            <input type="text" id="newProdImg" class="input-compact" placeholder="https://...">
+                        </div>
+                        <button id="btnGuardarProd" onclick="guardarNuevoProducto()" style="background:#28a745; color:white; padding:8px 15px; border:none; border-radius:4px; font-weight:bold;">+</button>
+                        <button id="btnCancelarEdicion" onclick="cancelarEdicion()" style="background:#888; color:white; padding:8px 10px; border:none; border-radius:4px; font-weight:bold; display:none;">X</button>
+                    </div>
+
+                    <table style="width:100%; border-collapse:collapse;">
+                        <thead style="background:#eee;"><tr><th style="padding:8px; text-align:left;">Img</th><th style="text-align:left;">Nombre</th><th style="text-align:left;">Cat</th><th style="text-align:left;">Precio</th><th style="text-align:left;">Stock</th><th>Acciones</th></tr></thead>
+                        <tbody id="tablaProductosBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- MODAL CLIENTES -->
+            <div id="modalClientes" class="modal-overlay">
+                <div class="modal-grande" style="background:white; width:700px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+                        <h2 style="color:#007bff;">Gestión de Clientes</h2>
+                        <button onclick="cerrarModal('modalClientes')" style="background:red; color:white; padding:5px 10px; border:none; border-radius:4px;">Cerrar</button>
+                    </div>
+                    
+                    <div style="background:#e9ecef; padding:15px; border-radius:8px; margin-bottom:15px; display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
+                        <input type="number" id="modRuc" class="input-compact" placeholder="RUC/CI">
+                        <input type="text" id="modNombre" class="input-compact" placeholder="Nombre Completo">
+                        <input type="text" id="modTel" class="input-compact" placeholder="Teléfono">
+                        <input type="text" id="modEmail" class="input-compact" placeholder="Email">
+                        <input type="text" id="modDir" class="input-compact" placeholder="Dirección">
+                        <button onclick="registrarClienteDesdeModal()" style="background:#007bff; color:white; border:none; border-radius:4px; font-weight:bold;">💾 Guardar Cliente</button>
+                    </div>
+
+                    <table class="tabla-comun">
+                        <thead><tr><th>RUC</th><th>Nombre</th><th>Teléfono</th><th>Acción</th></tr></thead>
+                        <tbody id="tablaClientesBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div> 
+    </div> 
+
+    <script>
+        // --- BASE DE DATOS ---
+        let productosBase = []; 
+        let clientesBase = []; 
+        let historialCierres = [];
+
+        // --- SISTEMA MULTI-MESA ---
+        let dbMesas = {}; 
+        let mesaActual = "BARRA"; 
+        
+        // --- VARIABLES GLOBALES ---
+        const TASA_IVA = 0.15;
+        let carrito = [];
+        let totalVenta = 0;
+        let historialVentas = [];
+        let fondoCaja = 0;
+        let ventasEfectivo = 0, ventasTarjeta = 0, ventasTransferencia = 0;
+        let usuarioActual = "";
+        let categoriaActiva = "Todos";
+        let tokenSesion = "";
+        
+        // VARIABLE PARA EDICION DE PRODUCTOS
+        let productoEnEdicion = -1; // -1 significa nuevo
+
+        // --- INICIALIZACIÓN ---
+        (function init() {
+            if (!localStorage.getItem('usuariosApp')) {
+                localStorage.setItem('usuariosApp', JSON.stringify([{ user: "Alexsander", pass: "2007", pin: "0000" }]));
+            }
+            
+            // Cargar productos
+            const storedProds = localStorage.getItem('productosApp');
+            if (storedProds) {
+                productosBase = JSON.parse(storedProds);
+                productosBase.forEach(p => { if(p.stock === undefined) p.stock = 100; });
+            }
+
+            // Cargar clientes
+            const storedClientes = localStorage.getItem('clientesApp');
+            if (storedClientes) {
+                clientesBase = JSON.parse(storedClientes);
+            } else {
+                clientesBase = [{ ruc: "9999999999", nombre: "Consumidor Final", tel: "", email: "", dir: "" }];
+                localStorage.setItem('clientesApp', JSON.stringify(clientesBase));
+            }
+
+            const storedCierres = localStorage.getItem('historialCierres');
+            if (storedCierres) historialCierres = JSON.parse(storedCierres);
+
+            // Cargar historial ventas
+            const storedVentas = localStorage.getItem('historialVentas');
+            if(storedVentas) historialVentas = JSON.parse(storedVentas);
+
+            renderGridProductos();
+            
+            document.getElementById('selectMesa').addEventListener('change', function() { cambiarMesa(this.value); });
+            setInterval(() => document.getElementById('reloj').innerText = new Date().toLocaleTimeString(), 1000);
+
+            // SEGURIDAD
+            const urlParams = new URLSearchParams(window.location.search);
+            if(urlParams.has('secure_token')) {
+                document.getElementById('loginArea').style.display = 'flex';
+            }
+        })();
+
+        // --- SISTEMA DE TOASTS ---
+        function mostrarNotificacion(mensaje, tipo = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${tipo}`;
+            toast.innerHTML = `<span>${mensaje}</span>`;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // --- LÓGICA DE CLIENTES ---
+        function buscarCliente(ruc) {
+            const c = clientesBase.find(cl => cl.ruc === ruc);
+            if(c) {
+                document.getElementById('clienteNombre').value = c.nombre;
+                document.getElementById('clienteTel').value = c.tel;
+                document.getElementById('clienteEmail').value = c.email;
+                document.getElementById('clienteDir').value = c.dir;
+                mostrarNotificacion("Cliente encontrado", "info");
+                guardarEstadoMesa(mesaActual);
+            } else {
+                document.getElementById('clienteNombre').value = "";
+                document.getElementById('clienteTel').value = "";
+                document.getElementById('clienteEmail').value = "";
+                document.getElementById('clienteDir').value = "";
+                mostrarNotificacion("Cliente nuevo. Llene los datos y guarde.", "info");
+            }
+        }
+
+        function guardarClienteActual() {
+            const ruc = document.getElementById('clienteRuc').value.trim();
+            const nombre = document.getElementById('clienteNombre').value.trim();
+            const tel = document.getElementById('clienteTel').value.trim();
+            const email = document.getElementById('clienteEmail').value.trim();
+            const dir = document.getElementById('clienteDir').value.trim();
+
+            if(!ruc || !nombre) {
+                return mostrarNotificacion("RUC y Nombre son obligatorios", "error");
+            }
+
+            const clienteData = { ruc, nombre, tel, email, dir };
+            guardarOActualizarClienteEnBase(clienteData);
+        }
+
+        function registrarClienteDesdeModal() {
+            const ruc = document.getElementById('modRuc').value.trim();
+            const nombre = document.getElementById('modNombre').value.trim();
+            const tel = document.getElementById('modTel').value.trim();
+            const email = document.getElementById('modEmail').value.trim();
+            const dir = document.getElementById('modDir').value.trim();
+
+            if(!ruc || !nombre) {
+                return mostrarNotificacion("RUC y Nombre son obligatorios", "error");
+            }
+
+            const clienteData = { ruc, nombre, tel, email, dir };
+            guardarOActualizarClienteEnBase(clienteData);
+            
+            document.getElementById('modRuc').value = "";
+            document.getElementById('modNombre').value = "";
+            document.getElementById('modTel').value = "";
+            document.getElementById('modEmail').value = "";
+            document.getElementById('modDir').value = "";
+            
+            abrirModalClientes(); 
+        }
+
+        function guardarOActualizarClienteEnBase(clienteData) {
+            const index = clientesBase.findIndex(c => c.ruc === clienteData.ruc);
+            
+            if (index >= 0) {
+                clientesBase[index] = clienteData;
+                mostrarNotificacion("Datos del cliente actualizados", "success");
+            } else {
+                clientesBase.push(clienteData);
+                mostrarNotificacion("Cliente registrado exitosamente", "success");
+            }
+
+            localStorage.setItem('clientesApp', JSON.stringify(clientesBase));
+            guardarEstadoMesa(mesaActual);
+        }
+
+        function eliminarCliente(ruc) {
+            if(ruc === "9999999999") return alert("No se puede eliminar al Consumidor Final");
+            
+            if(confirm("¿Está seguro de eliminar este cliente de la base de datos?")) {
+                clientesBase = clientesBase.filter(c => c.ruc !== ruc);
+                localStorage.setItem('clientesApp', JSON.stringify(clientesBase));
+                abrirModalClientes(); 
+                mostrarNotificacion("Cliente eliminado", "info");
+            }
+        }
+
+        function abrirModalClientes() {
+            const tbody = document.getElementById('tablaClientesBody');
+            tbody.innerHTML = "";
+            clientesBase.forEach(c => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="padding:5px;">${c.ruc}</td>
+                        <td>${c.nombre}</td>
+                        <td>${c.tel || '-'}</td>
+                        <td>
+                            ${c.ruc !== '9999999999' ? `<button onclick="eliminarCliente('${c.ruc}')" style="color:red; border:none; background:none; cursor:pointer;">🗑️</button>` : ''}
+                        </td>
+                    </tr>`;
+            });
+            document.getElementById('modalClientes').style.display = 'flex';
+        }
+
+        // --- LÓGICA MULTI-MESA ---
+        function cambiarMesa(nuevaMesa) {
+            guardarEstadoMesa(mesaActual);
+            mesaActual = nuevaMesa;
+            cargarEstadoMesa(nuevaMesa);
+            mostrarNotificacion(`Cambiado a ${nuevaMesa}`, 'info');
+        }
+
+        function guardarEstadoMesa(nombreMesa) {
+            const estadoCliente = {
+                ruc: document.getElementById('clienteRuc').value,
+                nombre: document.getElementById('clienteNombre').value,
+                tel: document.getElementById('clienteTel').value,
+                email: document.getElementById('clienteEmail').value,
+                dir: document.getElementById('clienteDir').value
+            };
+            dbMesas[nombreMesa] = { items: [...carrito], cliente: estadoCliente };
+        }
+
+        function cargarEstadoMesa(nombreMesa) {
+            const estado = dbMesas[nombreMesa];
+            if (estado) {
+                carrito = [...estado.items];
+                const c = estado.cliente;
+                document.getElementById('clienteRuc').value = c.ruc || "";
+                document.getElementById('clienteNombre').value = c.nombre || "";
+                document.getElementById('clienteTel').value = c.tel || "";
+                document.getElementById('clienteEmail').value = c.email || "";
+                document.getElementById('clienteDir').value = c.dir || "";
+            } else {
+                carrito = [];
+                limpiarInputsCliente();
+                document.getElementById('clienteRuc').value = "9999999999";
+                document.getElementById('clienteNombre').value = "Consumidor Final";
+            }
+            document.getElementById('selectMesa').value = nombreMesa;
+            renderCarrito();
+        }
+
+        function limpiarInputsCliente() {
+            document.getElementById('clienteRuc').value = "";
+            document.getElementById('clienteNombre').value = "";
+            document.getElementById('clienteTel').value = "";
+            document.getElementById('clienteEmail').value = "";
+            document.getElementById('clienteDir').value = "";
+        }
+
+        // --- SISTEMA DE LOGIN Y SEGURIDAD ---
+        function verificarAcceso() {
+            const u = document.getElementById('userIn').value;
+            const p = document.getElementById('passIn').value;
+            const usuarios = JSON.parse(localStorage.getItem('usuariosApp'));
+            const user = usuarios.find(item => item.user === u && item.pass === p);
+
+            if (user) {
+                usuarioActual = user.user;
+                document.getElementById('userDisplay').innerText = "Cajero: " + usuarioActual;
+                document.getElementById('loginArea').style.display = 'none';
+                document.getElementById('modalApertura').style.display = 'flex';
+                document.getElementById('montoInicialInput').focus();
+
+                tokenSesion = Math.random().toString(36).substring(2) + Date.now().toString(36);
+                
+                document.getElementById('userIn').value = "";
+                document.getElementById('passIn').value = "";
+                document.getElementById('errorMsg').style.display = 'none';
+
+            } else {
+                document.getElementById('errorMsg').style.display = 'block';
+            }
+        }
+
+        // --- APERTURA ---
+        function confirmarApertura() {
+            fondoCaja = parseFloat(document.getElementById('montoInicialInput').value) || 0;
+            actualizarIndicadores();
+            document.getElementById('modalApertura').style.display = 'none';
+            document.getElementById('sistemaVentas').style.display = 'flex';
+            
+            mesaActual = document.getElementById('selectMesa').value;
+            cargarEstadoMesa(mesaActual);
+
+            if(productosBase.length === 0) {
+                document.getElementById('gridProductos').innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align:center; padding:50px; color:#888;">
+                        <h2>🍽️ Menú Vacío</h2>
+                        <p>Usa el botón <b>"📦 Stock / Menú"</b> arriba para agregar categorías y platos.</p>
+                    </div>`;
+            } else {
+                renderGridProductos();
+            }
+            mostrarNotificacion("Turno Abierto Correctamente", 'success');
+        }
+
+        function cerrarSesion() { 
+            location.reload(); 
+        }
+        
+        // --- FILTRADO Y RENDERIZADO VISUAL ---
+        function filtrarCategoria(cat) {
+            categoriaActiva = cat;
+            document.getElementById('buscadorProductos').value = "";
+            const btns = document.querySelectorAll('.cat-btn');
+            btns.forEach(btn => {
+                if(btn.innerText === cat) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+            renderGridProductos();
+        }
+
+        function filtrarProductos() {
+            const texto = document.getElementById('buscadorProductos').value.toLowerCase();
+            renderGridProductos(texto);
+        }
+
+        function renderGridProductos(filtroTexto = "") {
+            const grid = document.getElementById('gridProductos');
+            grid.innerHTML = "";
+            
+            let productosFiltrados = productosBase;
+
+            if (filtroTexto === "") {
+                if (categoriaActiva !== "Todos") {
+                    productosFiltrados = productosFiltrados.filter(p => p.categoria === categoriaActiva);
+                }
+            }
+
+            if (filtroTexto !== "") {
+                productosFiltrados = productosFiltrados.filter(p => p.nombre.toLowerCase().includes(filtroTexto));
+            }
+
+            if(productosFiltrados.length === 0) {
+                grid.innerHTML = `<div style="grid-column: 1 / -1; text-align:center; padding:50px; color:#888;">No hay productos.</div>`;
+                return;
+            }
+
+            productosFiltrados.forEach((p) => {
+                const imgUrl = p.img || "https://via.placeholder.com/150?text=Sin+Foto";
+                const originalIndex = productosBase.indexOf(p);
+                const sinStock = p.stock <= 0;
+                
+                const card = document.createElement('div');
+                card.className = `product-card ${sinStock ? 'agotado' : ''}`;
+                if (!sinStock) card.onclick = () => agregarProductoClick(originalIndex);
+                
+                card.innerHTML = `
+                    <div class="card-img-container">
+                        <img src="${imgUrl}" class="card-img" alt="${p.nombre}">
+                        <div class="card-cat-badge">${p.categoria || 'Genérico'}</div>
+                        <div class="stock-badge" style="color:${sinStock ? 'red' : '#333'}">Stock: ${p.stock}</div>
+                    </div>
+                    <div class="card-info">
+                        <div class="card-title">${p.nombre}</div>
+                        <div class="card-price">$${p.precio.toFixed(2)}</div>
+                    </div>
+                    <div class="card-add" style="background:${sinStock ? '#ccc' : '#28a745'}">${sinStock ? 'X' : '+'}</div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // --- LÓGICA DE PEDIDO ---
+        function agregarProductoClick(index) {
+            const prod = productosBase[index];
+            
+            if (prod.stock <= 0) {
+                mostrarNotificacion("Producto Agotado", "error");
+                return;
+            }
+
+            const existing = carrito.find(item => item.nombre === prod.nombre && (!item.nota || item.nota === ""));
+            const cantidadEnCarrito = carrito.filter(i => i.nombre === prod.nombre).reduce((acc, i) => acc + i.cantidad, 0);
+            
+            if (cantidadEnCarrito >= prod.stock) {
+                mostrarNotificacion("No hay suficiente stock disponible", "error");
+                return;
+            }
+
+            if (existing) {
+                existing.cantidad++;
+                existing.subtotal = existing.cantidad * existing.precio;
+            } else {
+                carrito.push({ nombre: prod.nombre, precio: prod.precio, cantidad: 1, subtotal: prod.precio, nota: "", idProducto: index });
+            }
+            guardarEstadoMesa(mesaActual);
+            renderCarrito();
+        }
+
+        function renderCarrito() {
+            const tbody = document.getElementById('cartBody');
+            tbody.innerHTML = "";
+            totalVenta = 0;
+
+            carrito.forEach((item, idx) => {
+                totalVenta += item.subtotal;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="text-align:center;"><b>${item.cantidad}</b></td>
+                    <td>
+                        ${item.nombre}
+                        ${item.nota ? `<span class="item-note">(${item.nota})</span>` : ''}
+                    </td>
+                    <td style="text-align:right;">$${item.subtotal.toFixed(2)}</td>
+                    <td style="text-align:center;">
+                        <button onclick="agregarNota(${idx})" style="border:none; background:none; cursor:pointer; color:#007bff; margin-right:2px;">✏️</button>
+                        <button onclick="eliminarDelCarrito(${idx})" style="border:none; background:none; cursor:pointer; color:red; font-weight:bold;">&times;</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            const sub = totalVenta / (1 + TASA_IVA);
+            const iva = totalVenta - sub; 
+
+            document.getElementById('lblSubtotal').innerText = `$${sub.toFixed(2)}`;
+            document.getElementById('lblIva').innerText = `$${iva.toFixed(2)}`;
+            document.getElementById('montoTotal').innerText = `$${totalVenta.toFixed(2)}`;
+            calcularCambio();
+        }
+
+        function agregarNota(idx) {
+            const notaActual = carrito[idx].nota || "";
+            const nuevaNota = prompt("Nota para cocina (ej: Sin cebolla):", notaActual);
+            if (nuevaNota !== null) {
+                carrito[idx].nota = nuevaNota;
+                guardarEstadoMesa(mesaActual);
+                renderCarrito();
+            }
+        }
+
+        function eliminarDelCarrito(idx) {
+            carrito.splice(idx, 1);
+            guardarEstadoMesa(mesaActual);
+            renderCarrito();
+        }
+
+        function calcularCambio() {
+            const metodo = document.getElementById('metodoPago').value;
+            const divCambio = document.getElementById('displayCambio');
+            if (metodo === 'Efectivo') {
+                const recibido = parseFloat(document.getElementById('pagoRecibido').value) || 0;
+                const cambio = recibido - totalVenta;
+                if (cambio >= 0) divCambio.innerHTML = `<span class="text-verde">Cambio: $${cambio.toFixed(2)}</span>`;
+                else divCambio.innerHTML = `<span style="color:red">Falta: $${Math.abs(cambio).toFixed(2)}</span>`;
+            } else {
+                divCambio.innerText = "";
+            }
+        }
+
+        function finalizarVenta() {
+            if (carrito.length === 0) return mostrarNotificacion("El pedido está vacío", "error");
+            
+            const metodo = document.getElementById('metodoPago').value;
+            const recibido = parseFloat(document.getElementById('pagoRecibido').value) || 0;
+            
+            if (metodo === 'Efectivo' && recibido < totalVenta - 0.01) return mostrarNotificacion("El pago es insuficiente", "error");
+
+            for (let item of carrito) {
+                const prodReal = productosBase.find(p => p.nombre === item.nombre);
+                if (!prodReal || prodReal.stock < item.cantidad) {
+                    return mostrarNotificacion(`Error de Stock en: ${item.nombre}`, "error");
+                }
+            }
+
+            // --- AUTO-GUARDADO DE CLIENTE ---
+            const autoRuc = document.getElementById('clienteRuc').value.trim();
+            const autoNombre = document.getElementById('clienteNombre').value.trim();
+            
+            if (autoRuc && autoNombre && autoRuc !== "9999999999") {
+                 const clienteAuto = {
+                      ruc: autoRuc,
+                      nombre: autoNombre,
+                      tel: document.getElementById('clienteTel').value.trim(),
+                      email: document.getElementById('clienteEmail').value.trim(),
+                      dir: document.getElementById('clienteDir').value.trim()
+                 };
+                 // Buscamos si ya existe
+                 const idxCli = clientesBase.findIndex(c => c.ruc === clienteAuto.ruc);
+                 if(idxCli >= 0) {
+                      clientesBase[idxCli] = clienteAuto; // Actualizamos
+                 } else {
+                      clientesBase.push(clienteAuto); // Insertamos nuevo
+                 }
+                 localStorage.setItem('clientesApp', JSON.stringify(clientesBase));
+                 // Notificación silenciosa en consola o simplemente no molestar
+                 console.log("Cliente auto-guardado");
+            }
+
+            // Descontar Stock
+            carrito.forEach(item => {
+                const prodReal = productosBase.find(p => p.nombre === item.nombre);
+                if(prodReal) {
+                    prodReal.stock -= item.cantidad;
+                }
+            });
+            localStorage.setItem('productosApp', JSON.stringify(productosBase));
+            renderGridProductos(); 
+
+            if(metodo === 'Efectivo') ventasEfectivo += totalVenta;
+            else if(metodo === 'Tarjeta') ventasTarjeta += totalVenta;
+            else ventasTransferencia += totalVenta;
+
+            const venta = {
+                id: Date.now(),
+                fechaCompleta: new Date().toLocaleString(), 
+                fecha: new Date().toLocaleDateString(), 
+                hora: new Date().toLocaleTimeString(),
+                mesa: mesaActual,
+                cliente: document.getElementById('clienteNombre').value || "Consumidor Final",
+                ruc: document.getElementById('clienteRuc').value || "9999999999",
+                total: totalVenta.toFixed(2),
+                metodo: metodo,
+                items: [...carrito]
+            };
+
+            historialVentas.push(venta);
+            localStorage.setItem('historialVentas', JSON.stringify(historialVentas)); 
+
+            actualizarIndicadores();
+            
+            if(confirm("Venta Registrada. ¿Imprimir Ticket?")) imprimirFactura(venta);
+
+            mostrarNotificacion("Venta exitosa y Cliente Procesado", "success");
+            carrito = [];
+            delete dbMesas[mesaActual];
+            cargarEstadoMesa(mesaActual);
+            document.getElementById('pagoRecibido').value = "";
+        }
+
+        // --- FUNCIÓN PARA REINICIAR VENTAS DEL TURNO (NUEVA) ---
+        function resetearVentasTurno() {
+            // ***************************************************************
+            // <<<< CAMBIAR CÓDIGO AQUÍ ABAJO (Donde dice "2007") >>>>
+            const codigoAdmin = "2026";
+            // ***************************************************************
+
+            const codigo = prompt("⚠️ PELIGRO: ESTA ACCIÓN ELIMINARÁ TODAS LAS VENTAS REGISTRADAS.\n\nINGRESE CÓDIGO DE SEGURIDAD:");
+            
+            if (codigo === codigoAdmin) {
+                if(confirm("¿ESTÁ COMPLETAMENTE SEGURO?\nSe borrarán las ventas del historial y los contadores de caja se reiniciarán a 0.")) {
+                    // Borrar historial
+                    historialVentas = [];
+                    localStorage.setItem('historialVentas', JSON.stringify(historialVentas));
+                    
+                    // Reiniciar contadores de la sesión actual
+                    ventasEfectivo = 0;
+                    ventasTarjeta = 0;
+                    ventasTransferencia = 0;
+                    
+                    // Actualizar UI
+                    renderVentasDelDia();
+                    actualizarIndicadores();
+                    
+                    // Actualizar visualización en el modal de reporte si está abierto
+                    document.getElementById('reporteTotalVenta').innerText = "$0.00";
+                    const totalEfectivoSistema = fondoCaja; // Solo queda el fondo
+                    document.getElementById('reporteTotalEfectivo').innerText = `$${totalEfectivoSistema.toFixed(2)}`;
+                    
+                    mostrarNotificacion("Ventas eliminadas correctamente", "success");
+                }
+            } else if (codigo !== null) {
+                mostrarNotificacion("Código Incorrecto", "error");
+            }
+        }
+
+        // --- EXPORTACIÓN EXCEL SIMPLE ---
+        function generarExcelSimple() {
+            if (historialVentas.length === 0) {
+                alert("No hay ventas registradas en el historial para generar el reporte.");
+                return;
+            }
+
+            const datosReporte = historialVentas.map(v => ({
+                Fecha: v.fecha,
+                Hora: v.hora,
+                Mesa: v.mesa,
+                Cliente: v.cliente,
+                RUC: v.ruc,
+                Total: parseFloat(v.total),
+                MetodoPago: v.metodo,
+                Items: v.items.map(i => `${i.cantidad} x ${i.nombre}`).join(", ")
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(datosReporte);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Reporte Ventas");
+
+            XLSX.writeFile(wb, "Reporte_Ventas_Simple.xlsx");
+        }
+
+        // --- GESTIÓN DE PENDIENTES ---
+        function abrirModalPendientes() {
+            guardarEstadoMesa(mesaActual);
+            const tbody = document.getElementById('tablaPendientesBody');
+            tbody.innerHTML = "";
+            let hayPendientes = false;
+
+            for (const [nombreMesa, datos] of Object.entries(dbMesas)) {
+                if (datos.items.length > 0) {
+                    hayPendientes = true;
+                    const totalMesa = datos.items.reduce((acc, item) => acc + item.subtotal, 0);
+                    const clienteMesa = datos.cliente.nombre || "Consumidor Final";
+                    const cantItems = datos.items.reduce((acc, item) => acc + item.cantidad, 0);
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><b>${nombreMesa}</b></td>
+                            <td>${clienteMesa}</td>
+                            <td>${cantItems} ítems</td>
+                            <td class="text-verde"><b>$${totalMesa.toFixed(2)}</b></td>
+                            <td><button class="btn-ir-mesa" onclick="irAMesa('${nombreMesa}')">IR A MESA ➜</button></td>
+                        </tr>`;
+                }
+            }
+            if (!hayPendientes) tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; color:#888;">No hay ventas pendientes.</td></tr>`;
+            document.getElementById('modalPendientes').style.display = 'flex';
+        }
+
+        function irAMesa(nombreMesa) {
+            cambiarMesa(nombreMesa);
+            cerrarModal('modalPendientes');
+        }
+
+        // --- GESTIÓN DE PRODUCTOS ---
+        function cargarProductoParaEditar(idx) {
+            const p = productosBase[idx];
+            document.getElementById('newProdName').value = p.nombre;
+            document.getElementById('newProdCat').value = p.categoria;
+            document.getElementById('newProdPrice').value = p.precio;
+            document.getElementById('newProdStock').value = p.stock;
+            document.getElementById('newProdImg').value = p.img || '';
+            
+            productoEnEdicion = idx;
+            
+            const btn = document.getElementById('btnGuardarProd');
+            btn.innerText = "Actualizar";
+            btn.style.background = "#007bff";
+            
+            document.getElementById('btnCancelarEdicion').style.display = "inline-block";
+        }
+
+        function cancelarEdicion() {
+            document.getElementById('newProdName').value = "";
+            document.getElementById('newProdPrice').value = "";
+            document.getElementById('newProdStock').value = "";
+            document.getElementById('newProdImg').value = "";
+            
+            productoEnEdicion = -1;
+            
+            const btn = document.getElementById('btnGuardarProd');
+            btn.innerText = "+";
+            btn.style.background = "#28a745";
+            
+            document.getElementById('btnCancelarEdicion').style.display = "none";
+        }
+
+        function guardarNuevoProducto() {
+            const nom = document.getElementById('newProdName').value;
+            const cat = document.getElementById('newProdCat').value;
+            const pre = parseFloat(document.getElementById('newProdPrice').value);
+            const stk = parseInt(document.getElementById('newProdStock').value);
+            const img = document.getElementById('newProdImg').value;
+
+            if (nom && pre > 0) {
+                if (productoEnEdicion === -1) {
+                    // MODO AGREGAR
+                    productosBase.push({ nombre: nom, categoria: cat, precio: pre, stock: stk || 0, img: img });
+                    mostrarNotificacion("Producto agregado", "success");
+                } else {
+                    // MODO EDICION
+                    productosBase[productoEnEdicion] = { nombre: nom, categoria: cat, precio: pre, stock: stk || 0, img: img };
+                    mostrarNotificacion("Producto actualizado", "success");
+                    cancelarEdicion(); // Resetea el formulario
+                }
+                
+                localStorage.setItem('productosApp', JSON.stringify(productosBase));
+                
+                // Limpiar form si era nuevo
+                if (productoEnEdicion === -1) {
+                    document.getElementById('newProdName').value = "";
+                    document.getElementById('newProdPrice').value = "";
+                    document.getElementById('newProdStock').value = "";
+                    document.getElementById('newProdImg').value = "";
+                }
+                
+                renderGridProductos();
+                abrirModalProductos(); 
+            } else {
+                alert("Ingrese nombre y precio.");
+            }
+        }
+
+        function eliminarProducto(idx) {
+            if(confirm("¿Borrar producto?")) {
+                productosBase.splice(idx, 1);
+                localStorage.setItem('productosApp', JSON.stringify(productosBase));
+                renderGridProductos();
+                abrirModalProductos();
+                mostrarNotificacion("Producto eliminado", "info");
+                
+                if (productoEnEdicion === idx) cancelarEdicion();
+            }
+        }
+
+        function resetearProductos() {
+            // ***************************************************************
+            // <<<< CAMBIAR CÓDIGO AQUÍ ABAJO (Donde dice "2007") >>>>
+            const codigoAdmin = "2026"; 
+            // ***************************************************************
+
+            const codigo = prompt("INGRESE CÓDIGO DE ADMINISTRADOR PARA REINICIAR MENÚ:");
+            if (codigo === codigoAdmin) {
+                if(confirm("¿ESTÁ SEGURO? Se borrarán todos los productos permanentemente.")) {
+                    productosBase = [];
+                    localStorage.removeItem('productosApp');
+                    renderGridProductos();
+                    abrirModalProductos();
+                    mostrarNotificacion("Menú reiniciado", "info");
+                }
+            } else if (codigo !== null) alert("CÓDIGO INCORRECTO");
+        }
+
+        // --- ARQUEO ---
+        function abrirCierreCaja() {
+            document.getElementById('reporteTotalVenta').innerText = `$${(ventasEfectivo + ventasTarjeta + ventasTransferencia).toFixed(2)}`;
+            const totalEfectivoSistema = fondoCaja + ventasEfectivo;
+            document.getElementById('reporteTotalEfectivo').innerText = `$${totalEfectivoSistema.toFixed(2)}`;
+            
+            document.querySelectorAll('.input-arqueo').forEach(i => i.value = "");
+            calcularArqueo();
+            
+            // Renderizar la nueva tabla de ventas del día
+            renderVentasDelDia();
+            
+            renderHistorialCierres();
+            document.getElementById('modalReporte').style.display = 'flex';
+        }
+
+        function renderVentasDelDia() {
+            const tbody = document.getElementById('bodyVentasDelDia');
+            tbody.innerHTML = "";
+            
+            // Filtramos las ventas del día de hoy (o del turno actual)
+            // En este caso simple mostramos las últimas ventas primero
+            const ventasHoy = historialVentas.slice().reverse(); 
+
+            if(ventasHoy.length === 0) {
+                 tbody.innerHTML = "<tr><td colspan='5' style='text-align:center'>No hay ventas registradas.</td></tr>";
+                 return;
+            }
+
+            ventasHoy.forEach(v => {
+                 tbody.innerHTML += `
+                    <tr>
+                        <td>${v.hora}</td>
+                        <td>${v.mesa}</td>
+                        <td>${v.cliente.substring(0,15)}</td>
+                        <td>$${v.total}</td>
+                        <td>
+                            <button onclick='reimprimirVentaId(${v.id})' class="btn-action btn-kitchen" style="padding:5px; font-size:0.8em; width:auto;">🖨️ Ticket</button>
+                        </td>
+                    </tr>
+                 `;
+            });
+        }
+
+        function reimprimirVentaId(id) {
+            const venta = historialVentas.find(v => v.id === id);
+            if(venta) imprimirFactura(venta);
+        }
+
+        function renderHistorialCierres() {
+            const tbody = document.getElementById('bodyHistorialCierres');
+            tbody.innerHTML = "";
+            
+            const filtroF = document.getElementById('filtroFecha').value;
+            const filtroC = document.getElementById('filtroCajero').value.toLowerCase();
+
+            let filtrados = historialCierres;
+
+            if (filtroF) {
+                filtrados = filtrados.filter(c => {
+                    const fechaCierre = new Date(c.timestamp).toISOString().split('T')[0];
+                    return fechaCierre === filtroF;
+                });
+            }
+            if (filtroC) {
+                filtrados = filtrados.filter(c => c.cajero.toLowerCase().includes(filtroC));
+            }
+
+            filtrados.slice().reverse().forEach(c => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${c.fecha}</td>
+                        <td>${c.cajero}</td>
+                        <td>$${c.totalVenta.toFixed(2)}</td>
+                        <td>$${c.arqueo.toFixed(2)}</td>
+                        <td style="color:${c.diferencia < 0 ? 'red' : 'green'}">$${c.diferencia.toFixed(2)}</td>
+                        <td style="text-align:center;">
+                            <button onclick='reimprimirTicketCierre(${JSON.stringify(c)})' title="Reimprimir Ticket" style="background:none; border:none; font-size:1.2em; cursor:pointer;">🖨️</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            if(filtrados.length === 0) tbody.innerHTML = "<tr><td colspan='6' style='text-align:center; padding:10px;'>No se encontraron registros.</td></tr>";
+        }
+
+        function reimprimirTicketCierre(cierreData) {
+            generarTicketCierre(cierreData, true);
+        }
+
+        function calcularArqueo() {
+            let totalFisico = 0;
+            document.querySelectorAll('.input-arqueo').forEach(input => {
+                const valor = parseFloat(input.getAttribute('data-val'));
+                const cantidad = parseFloat(input.value) || 0;
+                totalFisico += valor * cantidad;
+            });
+
+            const totalSistema = fondoCaja + ventasEfectivo;
+            const diferencia = totalFisico - totalSistema;
+
+            document.getElementById('lblTotalArqueo').innerText = `$${totalFisico.toFixed(2)}`;
+            const lblDif = document.getElementById('lblDiferencia');
+            lblDif.innerText = `$${diferencia.toFixed(2)}`;
+            
+            if (diferencia > 0) { lblDif.style.color = "green"; lblDif.innerText += " (Sobra)"; }
+            else if (diferencia < 0) { lblDif.style.color = "red"; lblDif.innerText += " (Falta)"; }
+            else { lblDif.style.color = "#333"; lblDif.innerText += " (Exacto)"; }
+            
+            return totalFisico;
+        }
+
+        function resetearCierres() {
+            // ***************************************************************
+            // <<<< CAMBIAR CÓDIGO AQUÍ ABAJO (Donde dice "2007") >>>>
+            const codigoAdmin = "2026"; 
+            // ***************************************************************
+
+            const codigo = prompt("INGRESE CÓDIGO DE ADMINISTRADOR PARA BORRAR HISTORIAL:");
+            if (codigo === codigoAdmin) {
+                if(confirm("¿ESTÁ SEGURO? Se borrará todo el historial de cierres permanentemente.")) {
+                    historialCierres = [];
+                    localStorage.removeItem('historialCierres');
+                    renderHistorialCierres();
+                    mostrarNotificacion("Historial eliminado", "info");
+                }
+            } else if (codigo !== null) {
+                alert("CÓDIGO INCORRECTO");
+            }
+        }
+
+        function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
+        
+        function actualizarIndicadores() {
+            document.getElementById('displayFondo').innerText = `$${fondoCaja.toFixed(2)}`;
+            document.getElementById('displayVentasEfectivo').innerText = `$${ventasEfectivo.toFixed(2)}`;
+            document.getElementById('displayTarjeta').innerText = `$${ventasTarjeta.toFixed(2)}`;
+            document.getElementById('displayTrans').innerText = `$${ventasTransferencia.toFixed(2)}`;
+        }
+
+        function toggleDetalles() {
+            const det = document.getElementById('detallesClienteExtra');
+            det.style.display = det.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function registrarUsuario() {
+            const u = document.getElementById('regUser').value;
+            const p = document.getElementById('regPass').value;
+            const pin = document.getElementById('regPin').value;
+            
+            if(u && p && pin) {
+                const users = JSON.parse(localStorage.getItem('usuariosApp'));
+                // Verificar si existe
+                if (users.find(user => user.user === u)) {
+                    alert("El usuario ya existe.");
+                    return;
+                }
+                users.push({ user:u, pass:p, pin: pin });
+                localStorage.setItem('usuariosApp', JSON.stringify(users));
+                mostrarNotificacion("Usuario Creado", "success");
+                cerrarModal('modalRegistro');
+            } else {
+                alert("Complete todos los campos (Usuario, Clave y PIN)");
+            }
+        }
+
+        // Add these:
+        function abrirModalRegistro() {
+            document.getElementById('modalRegistro').style.display = 'flex';
+        }
+
+        function abrirModalOlvidoPass() {
+            document.getElementById('modalOlvidoPass').style.display = 'flex';
+        }
+
+        function recuperarContrasena() {
+            const u = document.getElementById('recPassUser').value;
+            const pin = document.getElementById('recPassPin').value;
+            const newP = document.getElementById('recPassNew').value;
+
+            if (u && pin && newP) {
+                let users = JSON.parse(localStorage.getItem('usuariosApp'));
+                const userIndex = users.findIndex(user => user.user === u && user.pin === pin);
+
+                if (userIndex !== -1) {
+                    users[userIndex].pass = newP;
+                    localStorage.setItem('usuariosApp', JSON.stringify(users));
+                    mostrarNotificacion("Contraseña actualizada correctamente", "success");
+                    cerrarModal('modalOlvidoPass');
+                } else {
+                    alert("Usuario o PIN incorrectos.");
+                }
+            } else {
+                alert("Por favor complete todos los campos.");
+            }
+        }
+
+        function abrirModalProductos() {
+            const tbody = document.getElementById('tablaProductosBody');
+            tbody.innerHTML = "";
+            productosBase.forEach((p, idx) => {
+                tbody.innerHTML += `
+                    <tr style="border-bottom:1px solid #eee;">
+                        <td style="padding:5px;"><img src="${p.img || 'https://via.placeholder.com/40'}" class="product-thumb-small"></td>
+                        <td>${p.nombre}</td>
+                        <td style="font-size:0.9em; color:#666;">${p.categoria || '-'}</td>
+                        <td>$${p.precio.toFixed(2)}</td>
+                        <td>${p.stock}</td>
+                        <td>
+                            <button onclick="cargarProductoParaEditar(${idx})" style="color:#007bff; border:none; background:none; cursor:pointer; margin-right:5px; font-size:1.1em;">✏️</button>
+                            <button onclick="eliminarProducto(${idx})" style="color:red; border:none; background:none; cursor:pointer; font-size:1.1em;">🗑️</button>
+                        </td>
+                    </tr>`;
+            });
+            document.getElementById('modalProductos').style.display = 'flex';
+        }
+
+        // --- IMPRESIÓN (MEJORADA ESTILO TICKET) ---
+        function generarEstiloTicket() {
+            return `
+                <style>
+                    body { font-family: 'Courier New', monospace; font-size: 12px; margin: 0; padding: 10px; width: 280px; }
+                    .header { text-align: center; margin-bottom: 10px; }
+                    .title { font-size: 16px; font-weight: bold; margin: 5px 0; }
+                    .divider { border-top: 1px dashed #000; margin: 5px 0; width: 100%; }
+                    .row { display: flex; justify-content: space-between; }
+                    .col { flex: 1; }
+                    .right { text-align: right; }
+                    .center { text-align: center; }
+                    .bold { font-weight: bold; }
+                    .big { font-size: 14px; }
+                    .item-row { margin-bottom: 2px; }
+                    .footer { text-align: center; margin-top: 15px; font-size: 10px; }
+                </style>
+            `;
+        }
+
+        function imprimirPreCuenta() {
+            if(carrito.length === 0) return mostrarNotificacion("El pedido está vacío", "error");
+            
+            const mesa = mesaActual;
+            const sub = totalVenta / (1 + TASA_IVA);
+            const iva = totalVenta - sub;
+            const sugerido = totalVenta * 0.10;
+            const itemsHtml = carrito.map(i => `
+                <div class="row item-row">
+                    <div class="col">${i.cantidad} ${i.nombre.substring(0,18)}</div>
+                    <div class="right">$${i.subtotal.toFixed(2)}</div>
+                </div>
+                ${i.nota ? `<div style="font-style:italic; font-size:10px; margin-left:15px;">(${i.nota})</div>` : ''}
+            `).join('');
+
+            const win = window.open('', '', 'width=320,height=600');
+            win.document.write(`
+                <html><head>${generarEstiloTicket()}</head><body>
+                    <div class="header">
+                        <div class="title">PRE-CUENTA</div>
+                        <div>ALEXSANDER RESTAURANT</div>
+                        <div>${new Date().toLocaleString()}</div>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="row"><div class="bold">MESA: ${mesa}</div></div>
+                    <div class="divider"></div>
+                    
+                    <div class="bold row">
+                        <div class="col">CANT DESCRIPCION</div>
+                        <div class="right">TOTAL</div>
+                    </div>
+                    <div class="divider"></div>
+                    
+                    ${itemsHtml}
+                    
+                    <div class="divider"></div>
+                    <div class="row"><div>Subtotal:</div><div class="right">$${sub.toFixed(2)}</div></div>
+                    <div class="row"><div>IVA 15%:</div><div class="right">$${iva.toFixed(2)}</div></div>
+                    <div class="row bold big"><div>TOTAL:</div><div class="right">$${totalVenta.toFixed(2)}</div></div>
+                    <div class="divider"></div>
+                    
+                    <div class="center" style="margin:10px 0;">
+                        <div>PROPINA SUGERIDA (10%): $${sugerido.toFixed(2)}</div>
+                        <div style="margin-top:5px; border:1px solid #000; padding:5px;">PROPINA: $__________</div>
+                        <div style="margin-top:5px; border:1px solid #000; padding:5px;">TOTAL PAGAR: $__________</div>
+                    </div>
+                    
+                    <div class="divider"></div>
+                    <div class="bold">DATOS FACTURACION:</div>
+                    <div style="margin-top:5px;">RUC/CI: ____________________</div>
+                    <div style="margin-top:5px;">Nombre: ____________________</div>
+                    <div style="margin-top:5px;">Dir: _______________________</div>
+                    <div style="margin-top:5px;">Telf: ______________________</div>
+                    <div style="margin-top:5px;">Email: _____________________</div>
+                    
+                    <div class="footer">Por favor verifique los detalles de su cuenta.<br>NO VÁLIDO COMO FACTURA</div>
+                </body></html>
+            `);
+            win.document.close();
+            win.print();
+        }
+
+        function imprimirFactura(venta) {
+            const itemsHtml = venta.items.map(i => `
+                <div class="row item-row">
+                    <div class="col">${i.cantidad} ${i.nombre.substring(0,18)}</div>
+                    <div class="right">$${i.subtotal.toFixed(2)}</div>
+                </div>
+                ${i.nota ? `<div style="font-style:italic; font-size:10px; margin-left:15px;">(${i.nota})</div>` : ''}
+            `).join('');
+
+            const win = window.open('', '', 'width=320,height=600');
+            win.document.write(`
+                <html><head>${generarEstiloTicket()}</head><body>
+                    <div class="header">
+                        <div class="title">ALEXSANDER RESTAURANT</div>
+                        <div>RUC: 1723456789001</div>
+                        <div>Dir: Av. Principal y Calle 1</div>
+                        <div>Telf: 0991234567</div>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="row"><div>Fecha: ${venta.fecha}</div><div class="right">${venta.hora}</div></div>
+                    <div class="row"><div>Mesa: ${venta.mesa}</div></div>
+                    <div class="row"><div>Cliente: ${venta.cliente.substring(0,20)}</div></div>
+                    <div class="row"><div>RUC/CI: ${venta.ruc}</div></div>
+                    <div class="divider"></div>
+                    
+                    ${itemsHtml}
+                    
+                    <div class="divider"></div>
+                    <div class="row bold big"><div>TOTAL:</div><div class="right">$${venta.total}</div></div>
+                    <div class="row"><div>Forma Pago:</div><div class="right">${venta.metodo}</div></div>
+                    <div class="divider"></div>
+                    
+                    <div class="footer">
+                        ¡Gracias por su visita!<br>
+                        Documento sin validez tributaria<br>
+                        (Demo Sistema)
+                    </div>
+                </body></html>
+            `);
+            win.document.close();
+            win.print();
+        }
+
+        function imprimirComanda() {
+            if(carrito.length === 0) return;
+            const mesa = mesaActual;
+            
+            const itemsHtml = carrito.map(i => `
+                <div style="margin-bottom:10px;">
+                    <div style="font-size:16px; font-weight:bold;">[ ] ${i.cantidad} ${i.nombre}</div>
+                    ${i.nota ? `<div style="font-weight:bold; background:#000; color:#fff; display:inline-block; padding:2px 5px;">** ${i.nota.toUpperCase()} **</div>` : ''}
+                </div>
+            `).join('');
+
+            const win = window.open('', '', 'width=320,height=500');
+            win.document.write(`
+                <html><head>${generarEstiloTicket()}
+                <style>.big-header { font-size:24px; font-weight:bold; text-align:center; margin-bottom:10px; border-bottom:3px solid #000; }</style>
+                </head><body>
+                    <div class="big-header">COCINA</div>
+                    <div class="row bold big"><div>MESA: ${mesa}</div><div class="right">${new Date().toLocaleTimeString()}</div></div>
+                    <div class="divider" style="border-top:2px solid #000;"></div>
+                    
+                    ${itemsHtml}
+                    
+                    <div class="divider" style="border-top:2px solid #000;"></div>
+                </body></html>
+            `);
+            win.document.close();
+            win.print();
+        }
+
+        function imprimirCierreZ() {
+            const totalFisico = calcularArqueo();
+            const totalSistema = fondoCaja + ventasEfectivo;
+            const diferencia = totalFisico - totalSistema;
+            const totalVentas = ventasEfectivo + ventasTarjeta + ventasTransferencia;
+
+            const datosCierre = {
+                id: Date.now(),
+                timestamp: Date.now(),
+                fecha: new Date().toLocaleString(),
+                cajero: usuarioActual,
+                fondo: fondoCaja,
+                efectivo: ventasEfectivo,
+                tarjeta: ventasTarjeta,
+                transf: ventasTransferencia,
+                totalVenta: totalVentas,
+                totalSistema: totalSistema,
+                arqueo: totalFisico,
+                diferencia: diferencia
+            };
+
+            historialCierres.push(datosCierre);
+            localStorage.setItem('historialCierres', JSON.stringify(historialCierres));
+
+            generarTicketCierre(datosCierre, false);
+            
+            setTimeout(() => {
+                mostrarNotificacion("Cierre Exitoso. Cerrando...", "success");
+                setTimeout(() => location.reload(), 2000);
+            }, 1000);
+        }
+
+        function generarTicketCierre(c, esCopia) {
+            const titulo = esCopia ? "COPIA DE CIERRE (Z)" : "CIERRE DE CAJA (Z)";
+            const win = window.open('', '', 'width=320,height=600');
+            win.document.write(`
+                <html><head>${generarEstiloTicket()}</head><body>
+                    <div class="header">
+                        <div class="title">${titulo}</div>
+                        <div>ALEXSANDER RESTAURANT</div>
+                        <div>ID: ${c.id}</div>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="row"><div>Cajero:</div><div class="right">${c.cajero}</div></div>
+                    <div class="row"><div>Fecha:</div><div class="right">${c.fecha}</div></div>
+                    <div class="divider"></div>
+                    
+                    <div class="bold">RESUMEN VENTAS</div>
+                    <div class="row"><div>Fondo Inicial:</div><div class="right">$${c.fondo.toFixed(2)}</div></div>
+                    <div class="row"><div>(+) Efectivo:</div><div class="right">$${c.efectivo.toFixed(2)}</div></div>
+                    <div class="row"><div>(+) Tarjeta:</div><div class="right">$${c.tarjeta.toFixed(2)}</div></div>
+                    <div class="row"><div>(+) Transf.:</div><div class="right">$${c.transf.toFixed(2)}</div></div>
+                    <div class="divider"></div>
+                    <div class="row bold"><div>TOTAL VENTAS:</div><div class="right">$${c.totalVenta.toFixed(2)}</div></div>
+                    <div class="row"><div>TOTAL CAJA (SIS):</div><div class="right">$${c.totalSistema.toFixed(2)}</div></div>
+                    <div class="divider"></div>
+                    
+                    <div class="bold">ARQUEO FÍSICO</div>
+                    <div class="row"><div>Conteo Efectivo:</div><div class="right">$${c.arqueo.toFixed(2)}</div></div>
+                    <div class="row bold"><div>DIFERENCIA:</div><div class="right">$${c.diferencia.toFixed(2)}</div></div>
+                    <div class="center" style="margin-top:5px;">
+                        ${c.diferencia === 0 ? '(CUADRADO PERFECTO)' : (c.diferencia > 0 ? '(SOBRANTE)' : '(FALTANTE)')}
+                    </div>
+                    
+                    <div class="divider"></div>
+                    <div class="footer">
+                        Firma Cajero: __________________<br><br>
+                        Firma Supervisor: ______________
+                    </div>
+                </body></html>
+            `);
+            win.document.close();
+            win.print();
+        }
+    </script>
+</body>
+</html>
