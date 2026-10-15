@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Korea Town - K-Pop Fan Party</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&family=Permanent+Marker&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                        marker: ['Permanent Marker', 'cursive'],
+                    },
+                    colors: {
+                        kpop: {
+                            bg: '#0a0514',
+                            pink: '#ff1493',
+                            purple: '#9370db',
+                            blue: '#00bfff',
+                            dark: '#1a1025'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            /* Nuevo fondo de luces de concierto */
+            background-color: #05010a;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(255, 20, 147, 0.15), transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(0, 191, 255, 0.15), transparent 50%),
+                radial-gradient(circle at 50% 80%, rgba(147, 112, 219, 0.15), transparent 50%);
+            background-attachment: fixed;
+            color: white;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0514; }
+        ::-webkit-scrollbar-thumb { background: linear-gradient(to bottom, #00bfff, #9370db, #ff1493); border-radius: 10px; }
+        
+        /* Inputs styling */
+        input:focus, select:focus, textarea:focus {
+            box-shadow: 0 0 10px rgba(255, 20, 147, 0.3);
+        }
+
+        /* Ocultar elementos dinámicamente */
+        .hidden-section {
+            display: none !important;
+        }
+
+        /* Animación para resaltar VIP */
+        @keyframes bounce-glow {
+            0%, 100% { transform: translateY(0) rotate(3deg); box-shadow: 0 0 10px #ff1493; }
+            50% { transform: translateY(-5px) rotate(3deg); box-shadow: 0 0 20px #ff1493; }
+        }
+        .vip-badge {
+            animation: bounce-glow 2s infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen py-10 px-4 flex justify-center items-start">
+
+    <div class="max-w-3xl w-full bg-[#130b20]/85 backdrop-blur-xl rounded-3xl shadow-[0_0_50px_rgba(147,112,219,0.25)] border border-white/10 overflow-hidden">
+        
+        <!-- Header -->
+        <div class="text-center pt-10 pb-6 px-6 relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-kpop-blue via-kpop-purple to-kpop-pink"></div>
+            
+            <p class="text-kpop-purple font-bold tracking-widest text-sm mb-1">환영합니다 (¡BIENVENIDOS!)</p>
+            <h2 class="font-marker text-4xl text-white transform -rotate-2 mb-2 text-kpop-pink drop-shadow-[0_0_10px_rgba(255,20,147,0.6)]">Korea Town</h2>
+            <h1 class="text-4xl sm:text-6xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white via-kpop-purple to-kpop-blue uppercase drop-shadow-lg mb-2">
+                K-POP FAN PARTY
+            </h1>
+            <p class="text-lg text-gray-300 font-medium mb-4">¡VIVE LA EXPERIENCIA K-POP! 🎤💃</p>
+            
+            <div class="flex flex-wrap justify-center items-center gap-3 text-sm text-gray-300 font-medium">
+                <span class="bg-white/10 px-3 py-1 rounded-full border border-white/20"><i class="fa-regular fa-calendar text-kpop-pink mr-1"></i> 15 de Nov</span>
+                <span class="bg-white/10 px-3 py-1 rounded-full border border-white/20"><i class="fa-regular fa-clock text-kpop-purple mr-1"></i> 9:30 AM - 12:00 PM</span>
+                <span class="bg-white/10 px-3 py-1 rounded-full border border-white/20"><i class="fa-solid fa-location-dot text-kpop-blue mr-1"></i> Vaca de Castro y Pedro Freile</span>
+            </div>
+        </div>
+
+        <form id="ticketForm" class="px-6 pb-8 space-y-8">
+            
+            <div class="bg-black/30 p-5 rounded-2xl border border-gray-800 space-y-4">
+                <h3 class="text-xl font-bold text-white border-b border-gray-700 pb-2 mb-4"><i class="fa-regular fa-id-card text-kpop-purple mr-2"></i>Tus Datos</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-200 mb-1 ml-1">Nombre <span class="text-kpop-pink">*</span></label>
+                        <input type="text" id="firstName" required placeholder="Tu nombre" 
+                               class="w-full bg-black/50 border border-gray-600 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-kpop-pink transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-200 mb-1 ml-1">Apellido <span class="text-kpop-pink">*</span></label>
+                        <input type="text" id="lastName" required placeholder="Tu apellido" 
+                               class="w-full bg-black/50 border border-gray-600 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-kpop-pink transition">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-200 mb-1 ml-1">Correo electrónico <span class="text-kpop-pink">*</span></label>
+                    <input type="email" id="email" required placeholder="correo@ejemplo.com" 
+                           class="w-full bg-black/50 border border-gray-600 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-kpop-purple transition">
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-xl font-bold text-white mb-4 text-center">Elige tu Localidad 🎫</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    
+                    <!-- General Option -->
+                    <label class="relative cursor-pointer">
+                        <input type="radio" name="ticketType" value="GENERAL" onchange="updateTicketView()" class="peer sr-only">
+                        <div class="h-full bg-black/40 border-2 border-gray-700 rounded-2xl p-5 hover:bg-blue-900/10 transition-all peer-checked:border-kpop-blue peer-checked:bg-blue-900/20 peer-checked:shadow-[0_0_20px_rgba(0,191,255,0.2)]">
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="text-2xl font-black text-kpop-blue italic tracking-wide">GENERAL</h4>
+                                <i class="fa-solid fa-ticket text-kpop-blue text-xl"></i>
+                            </div>
+                            <p class="text-xs text-blue-200 mb-4 bg-blue-900/40 inline-block px-2 py-1 rounded">ACCESO AL EVENTO</p>
+                            
+                            <div class="space-y-2 mb-4">
+                                <div class="flex justify-between items-end">
+                                    <span class="text-xs text-gray-400">Precio regular</span>
+                                    <span class="text-lg font-bold text-gray-300 line-through">$5.00</span>
+                                </div>
+                                <div class="flex justify-between items-end bg-blue-500/10 p-2 rounded-lg border border-blue-500/20">
+                                    <span class="text-xs font-bold text-kpop-blue">Preventa (-20%)</span>
+                                    <span class="text-2xl font-black text-white">$4.00</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Check icon overlay -->
+                        <div class="absolute top-4 right-4 text-kpop-blue opacity-0 peer-checked:opacity-100 transition-opacity">
+                            <i class="fa-solid fa-circle-check text-2xl"></i>
+                        </div>
+                    </label>
+
+                    <!-- VIP Option -->
+                    <label class="relative cursor-pointer">
+                        <input type="radio" name="ticketType" value="VIP" checked onchange="updateTicketView()" class="peer sr-only">
+                        <div class="h-full bg-black/40 border-2 border-gray-700 rounded-2xl p-5 hover:bg-fuchsia-900/10 transition-all peer-checked:border-kpop-pink peer-checked:bg-fuchsia-900/20 peer-checked:shadow-[0_0_20px_rgba(255,20,147,0.2)] relative overflow-hidden">
+                            
+                            <!-- Floating VIP Badge (Llamativo) -->
+                            <div class="absolute -top-1 -right-2 bg-kpop-pink text-white font-black py-1 px-4 rounded-bl-xl rounded-tr-xl text-xs vip-badge border border-white/50 z-10">
+                                대박! BEST SELLER 🔥
+                            </div>
+
+                            <div class="flex items-center justify-between mb-2 mt-2">
+                                <h4 class="text-2xl font-black text-kpop-pink italic tracking-wide"><i class="fa-solid fa-crown mr-2"></i>VIP</h4>
+                                <span class="bg-kpop-pink text-white text-[10px] font-bold px-2 py-1 rounded-full transform rotate-3 z-0">MÁS BENEFICIOS</span>
+                            </div>
+                            <p class="text-xs text-pink-200 mb-4 bg-pink-900/40 inline-block px-2 py-1 rounded">EXPERIENCIA COMPLETA</p>
+                            
+                            <div class="space-y-2 mb-4">
+                                <div class="flex justify-between items-end">
+                                    <span class="text-xs text-gray-400">Precio regular</span>
+                                    <span class="text-lg font-bold text-gray-300 line-through">$10.00</span>
+                                </div>
+                                <div class="flex justify-between items-end bg-pink-500/10 p-2 rounded-lg border border-pink-500/20">
+                                    <span class="text-xs font-bold text-kpop-pink">Preventa (-20%)</span>
+                                    <span class="text-2xl font-black text-white">$8.00</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Check icon overlay -->
+                        <div class="absolute top-4 right-4 text-kpop-pink opacity-0 peer-checked:opacity-100 transition-opacity">
+                            <i class="fa-solid fa-circle-check text-2xl"></i>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div id="benefitsDisplay" class="bg-black/50 p-5 rounded-2xl border border-gray-700 shadow-inner">
+                <!-- Injected via JS based on selection -->
+            </div>
+
+            <div class="bg-white/5 p-5 rounded-2xl border border-white/10 space-y-5">
+                <div>
+                    <label class="block text-sm font-bold text-white mb-2">¿Cuántas entradas deseas reservar? 🎟️ <span class="text-kpop-pink">*</span></label>
+                    <select id="ticketQty" required onchange="handleQuantityChange()" class="w-full bg-black/70 border border-gray-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white appearance-none">
+                        <option value="1">1 Entrada</option>
+                        <option value="2">2 Entradas</option>
+                        <option value="3">3 Entradas</option>
+                        <option value="4">4 Entradas</option>
+                        <option value="5">5 Entradas</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-white mb-3">¿Estás aprovechando nuestra PREVENTA? (Del 12 al 18 de oct) 📅 <span class="text-kpop-pink">*</span></label>
+                    <div class="space-y-3">
+                        <label class="flex items-center p-3 border border-gray-600 rounded-xl cursor-pointer hover:bg-white/5 transition has-[:checked]:border-kpop-purple has-[:checked]:bg-kpop-purple/10">
+                            <input type="radio" name="presale" value="yes" checked onchange="calculateTotal()" class="w-5 h-5 text-kpop-purple bg-black border-gray-500 focus:ring-kpop-purple focus:ring-2">
+                            <span class="ml-3 text-sm text-gray-200">Sí, quiero el descuento de preventa 🎉</span>
+                        </label>
+                        <label class="flex items-center p-3 border border-gray-600 rounded-xl cursor-pointer hover:bg-white/5 transition has-[:checked]:border-gray-400 has-[:checked]:bg-gray-500/10">
+                            <input type="radio" name="presale" value="no" onchange="calculateTotal()" class="w-5 h-5 text-gray-400 bg-black border-gray-500 focus:ring-gray-400 focus:ring-2">
+                            <span class="ml-3 text-sm text-gray-200">No, pagaré el valor regular</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lunch Section (Generada dinámicamente) -->
+            <div id="lunchSection" class="bg-gradient-to-r from-fuchsia-900/20 to-purple-900/20 p-5 rounded-2xl border border-fuchsia-500/30 space-y-4">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="fa-solid fa-bowl-rice text-kpop-pink text-xl"></i>
+                    <h3 class="text-lg font-bold text-white">Tu Lunch VIP 🍱</h3>
+                </div>
+                
+                <div id="dynamicLunchContainer" class="space-y-4">
+                    <!-- Los selectores de lunch se inyectan aquí via JS dependiendo de la cantidad de entradas -->
+                </div>
+            </div>
+
+            <!-- SECCIÓN: Nombres en Coreano Dinámicos -->
+            <div class="bg-black/30 p-5 rounded-2xl border border-gray-800 space-y-4 relative overflow-hidden group">
+                <!-- Decorative background icon (Detalle aesthetic) -->
+                <div class="absolute -right-6 -bottom-6 opacity-5 transform group-hover:scale-110 transition-transform duration-500 pointer-events-none">
+                    <i class="fa-solid fa-language text-[150px] text-kpop-blue"></i>
+                </div>
+                
+                <label class="block text-sm font-bold text-white mb-1 ml-1 relative z-10"><i class="fa-solid fa-language text-kpop-blue mr-2"></i>¿Deseas los nombres en coreano para el pasaporte? ✍️🇰🇷 <span class="text-kpop-pink">*</span></label>
+                <p class="text-xs text-gray-400 ml-1 mb-3 relative z-10">Tu entrada incluye el Pasaporte del Evento. ¡Podemos adaptar tu nombre (y el de tus acompañantes) al alfabeto coreano (Hangul) para hacerlo mucho más especial! 🫰✨</p>
+                
+                <div class="flex flex-col sm:flex-row gap-3 relative z-10 mb-4">
+                    <label class="flex items-center p-3 border border-gray-600 rounded-xl cursor-pointer hover:bg-white/5 transition flex-1 has-[:checked]:border-kpop-blue has-[:checked]:bg-kpop-blue/10 has-[:checked]:shadow-[0_0_15px_rgba(0,191,255,0.2)]">
+                        <input type="radio" name="wantKoreanName" value="yes" checked onchange="toggleKoreanNames()" class="w-5 h-5 text-kpop-blue bg-black border-gray-500 focus:ring-kpop-blue focus:ring-2">
+                        <span class="ml-3 text-sm text-gray-200 font-semibold">¡Sí, por favor! (네!) 😍</span>
+                    </label>
+                    <label class="flex items-center p-3 border border-gray-600 rounded-xl cursor-pointer hover:bg-white/5 transition flex-1 has-[:checked]:border-gray-400 has-[:checked]:bg-gray-500/10">
+                        <input type="radio" name="wantKoreanName" value="no" onchange="toggleKoreanNames()" class="w-5 h-5 text-gray-400 bg-black border-gray-500 focus:ring-gray-400 focus:ring-2">
+                        <span class="ml-3 text-sm text-gray-200">No, normales están bien</span>
+                    </label>
+                </div>
+
+                <div id="dynamicKoreanNamesContainer" class="space-y-3 relative z-10">
+                    <!-- Los inputs de nombres se inyectan aquí dependiendo de la cantidad de tickets -->
+                </div>
+            </div>
+
+            <div class="mt-6">
+                <h3 class="text-lg font-bold text-white mb-3"><i class="fa-solid fa-building-columns text-green-400 mr-2"></i>Adjunta tu comprobante de pago 📎</h3>
+                <div class="bg-gradient-to-br from-gray-900 to-black border border-gray-600 rounded-xl p-5 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 bg-gray-700 text-xs font-bold px-3 py-1 rounded-bl-lg text-white">
+                        CUENTA BANCARIA
+                    </div>
+                    <div class="space-y-2 mt-2 text-sm text-gray-300 font-mono">
+                        <p><span class="text-gray-500">Banco:</span> Pichincha</p>
+                        <p><span class="text-gray-500">Número de cuenta:</span> 2216325843</p>
+                        <p><span class="text-gray-500">Nombre:</span> Alexis Torres</p>
+                        <p><span class="text-gray-500">CI:</span> 1708203607</p>
+                    </div>
+                    <div class="mt-4 bg-yellow-500/10 border border-yellow-500/30 p-3 rounded-lg flex items-start gap-3">
+                        <i class="fa-solid fa-circle-exclamation text-yellow-500 mt-0.5"></i>
+                        <p class="text-xs text-yellow-200/80">Realiza la transferencia por el total. Al enviar este formulario se abrirá WhatsApp para que nos envíes la <strong>captura de pantalla (máx 10MB)</strong>.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center border-t border-gray-700 pt-6 mt-4">
+                <div class="flex flex-col">
+                    <span class="text-sm text-gray-400">Total a Pagar:</span>
+                    <span id="ticketLabel" class="text-xs font-bold text-kpop-pink">VIP (Preventa) x 1</span>
+                </div>
+                <span id="totalPrice" class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-300">$8.00</span>
+            </div>
+
+            <button type="submit" class="w-full bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-500 hover:to-emerald-400 text-white font-bold py-4 px-6 rounded-xl shadow-[0_5px_20px_rgba(16,185,129,0.3)] transition-all transform hover:-translate-y-1 flex justify-center items-center gap-3 text-lg mt-4 border border-green-400/50">
+                <i class="fa-brands fa-whatsapp text-2xl"></i>
+                Confirmar y Enviar al WhatsApp
+            </button>
+        </form>
+    </div>
+
+    <script>
+        // Configuración de Precios según imagen
+        const PRICES = {
+            GENERAL: { regular: 5.00, presale: 4.00 },
+            VIP: { regular: 10.00, presale: 8.00 }
+        };
+
+        // Elementos DOM
+        const form = document.getElementById('ticketForm');
+        const ticketQtyEl = document.getElementById('ticketQty');
+        const totalPriceEl = document.getElementById('totalPrice');
+        const ticketLabelEl = document.getElementById('ticketLabel');
+        const lunchSection = document.getElementById('lunchSection');
+        const dynamicLunchContainer = document.getElementById('dynamicLunchContainer');
+        const benefitsDisplay = document.getElementById('benefitsDisplay');
+        const dynamicKoreanNamesContainer = document.getElementById('dynamicKoreanNamesContainer');
+
+        // Contenidos de beneficios
+        const benefitsHTML = {
+            GENERAL: `
+                <h5 class="font-bold text-kpop-blue mb-3 flex items-center gap-2"><i class="fa-solid fa-circle-check"></i> INCLUYE:</h5>
+                <ul class="text-sm text-gray-300 space-y-2 mb-4">
+                    <li class="flex items-start gap-2"><i class="fa-solid fa-ticket text-kpop-blue mt-1 w-4"></i> Acceso al K-Pop Fan Party.</li>
+                    <li class="flex items-start gap-2"><i class="fa-solid fa-passport text-kpop-blue mt-1 w-4"></i> Pasaporte del evento.</li>
+                    <li class="flex items-start gap-2"><i class="fa-solid fa-users text-kpop-blue mt-1 w-4"></i> Participación en las actividades generales del evento.</li>
+                </ul>
+                <h5 class="font-bold text-gray-500 mb-3 flex items-center gap-2"><i class="fa-solid fa-circle-xmark"></i> NO INCLUYE:</h5>
+                <ul class="text-sm text-gray-500 space-y-2">
+                    <li class="flex items-start gap-2"><i class="fa-solid fa-bowl-rice mt-1 w-4"></i> Lunch.</li>
+                    <li class="flex items-start gap-2"><i class="fa-solid fa-gift mt-1 w-4"></i> Participación en el sorteo de premios.</li>
+                </ul>
+                <p class="text-center italic text-kpop-blue/70 text-xs mt-4 font-bold">¡Disfruta del evento, vive la experiencia K-pop y lleva contigo tu pasaporte!</p>
+            `,
+            VIP: `
+                <h5 class="font-bold text-kpop-pink mb-3 flex items-center gap-2"><i class="fa-solid fa-circle-check"></i> INCLUYE:</h5>
+                <ul class="text-sm text-gray-300 space-y-2">
+                    <li class="flex items-start gap-2"><i class="fa-solid fa-ticket text-kpop-pink mt-1 w-4"></i> Acceso al evento.</li>
+                    <li class="flex items-start gap-2"><i class="fa-solid fa-bowl-rice text-kpop-pink mt-1 w-4"></i> Lunch asiático + Bebida + Snack.</li>
+                    <li class="flex items-start gap-2"><i class="fa-solid fa-passport text-kpop-pink mt-1 w-4"></i> Pasaporte del evento.</li>
+                    <li class="flex items-start gap-2"><i class="fa-solid fa-gift text-kpop-pink mt-1 w-4"></i> Participación en el sorteo de premios.</li>
+                    <li class="flex items-start gap-2"><i class="fa-solid fa-tag text-kpop-pink mt-1 w-4"></i> 5% OFF en toda nuestra tienda.</li>
+                </ul>
+                <p class="text-center italic text-kpop-pink/80 text-xs mt-4 font-bold">👑 ¡Todo lo que necesitas para vivir la experiencia al máximo!</p>
+            `
+        };
+
+        // Función para actualizar la vista según el tipo de ticket
+        function updateTicketView() {
+            const ticketType = document.querySelector('input[name="ticketType"]:checked').value;
+            
+            // Actualizar panel de beneficios
+            benefitsDisplay.innerHTML = benefitsHTML[ticketType];
+
+            // Mostrar u ocultar sección de Lunch y generar selects
+            if (ticketType === 'VIP') {
+                lunchSection.classList.remove('hidden-section');
+                renderLunchSelectors();
+            } else {
+                lunchSection.classList.add('hidden-section');
+                dynamicLunchContainer.innerHTML = ''; // Limpiar opciones
+            }
+
+            calculateTotal();
+        }
+
+        // Manejar cambio en la cantidad de tickets
+        function handleQuantityChange() {
+            calculateTotal();
+            const ticketType = document.querySelector('input[name="ticketType"]:checked').value;
+            if (ticketType === 'VIP') {
+                renderLunchSelectors();
+            }
+            renderKoreanNameInputs();
+        }
+
+        // Función para renderizar dinámicamente un selector de lunch por entrada VIP
+        function renderLunchSelectors() {
+            const qty = parseInt(ticketQtyEl.value) || 1;
+            let html = '';
+            
+            for (let i = 1; i <= qty; i++) {
+                html += `
+                    <div class="bg-black/40 p-4 rounded-xl border border-fuchsia-500/20 relative overflow-hidden group">
+                        <!-- Ícono de fondo sutil -->
+                        <div class="absolute -right-2 -bottom-2 opacity-[0.03] transform group-hover:scale-110 transition-transform pointer-events-none">
+                            <i class="fa-solid fa-bowl-rice text-6xl text-kpop-pink"></i>
+                        </div>
+                        <label class="block text-sm font-bold text-white mb-2 text-kpop-pink relative z-10">Entrada ${i} <span class="text-xs text-gray-300 font-normal">- Elige tu lunch</span> *</label>
+                        <select name="lunchOption[]" required class="w-full bg-black/70 border border-gray-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-kpop-pink appearance-none relative z-10">
+                            <option value="" disabled selected>Selecciona tu opción...</option>
+                            <option value="ONIGIRI KANIKAMA">ONIGIRI KANIKAMA</option>
+                            <option value="ONIGIRI SALMON">ONIGIRI SALMON</option>
+                            <option value="ONIGIRI CAMARON">ONIGIRI CAMARON</option>
+                            <option value="KIMBAP">KIMBAP (5 rollitos)</option>
+                        </select>
+                    </div>
+                `;
+            }
+            
+            dynamicLunchContainer.innerHTML = html;
+        }
+
+        // FUNCIONES PARA NOMBRES EN COREANO DINÁMICOS
+        function toggleKoreanNames() {
+            const wantName = document.querySelector('input[name="wantKoreanName"]:checked').value === 'yes';
+            if (wantName) {
+                dynamicKoreanNamesContainer.classList.remove('hidden-section');
+                renderKoreanNameInputs();
+            } else {
+                dynamicKoreanNamesContainer.classList.add('hidden-section');
+                dynamicKoreanNamesContainer.innerHTML = '';
+            }
+        }
+
+        function renderKoreanNameInputs() {
+            const wantName = document.querySelector('input[name="wantKoreanName"]:checked')?.value === 'yes';
+            if (!wantName) return;
+
+            const qty = parseInt(ticketQtyEl.value) || 1;
+            let html = '';
+            
+            for (let i = 1; i <= qty; i++) {
+                html += `
+                    <div class="bg-blue-900/10 p-3 rounded-xl border border-blue-500/20">
+                        <label class="block text-xs font-bold text-kpop-blue mb-1 ml-1">Nombre para Entrada ${i} <span class="text-kpop-pink">*</span></label>
+                        <input type="text" name="koreanNameInput[]" required placeholder="Ingresa el nombre de la persona ${i}" 
+                               class="w-full bg-black/60 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-kpop-blue transition shadow-inner">
+                    </div>
+                `;
+            }
+            
+            dynamicKoreanNamesContainer.innerHTML = html;
+        }
+
+        // Función para calcular el total
+        function calculateTotal() {
+            const ticketType = document.querySelector('input[name="ticketType"]:checked').value;
+            const isPresale = document.querySelector('input[name="presale"]:checked').value === 'yes';
+            const qty = parseInt(ticketQtyEl.value) || 1;
+            
+            // Obtener precio unitario
+            const unitPrice = isPresale ? PRICES[ticketType].presale : PRICES[ticketType].regular;
+            const total = unitPrice * qty;
+
+            // Actualizar UI
+            totalPriceEl.textContent = `$${total.toFixed(2)}`;
+            
+            // Actualizar etiqueta descriptiva
+            const priceTypeStr = isPresale ? 'Preventa' : 'Regular';
+            ticketLabelEl.textContent = `${ticketType} (${priceTypeStr}) x ${qty}`;
+            
+            // Colorear etiqueta según ticket
+            ticketLabelEl.className = `text-xs font-bold ${ticketType === 'VIP' ? 'text-kpop-pink' : 'text-kpop-blue'}`;
+
+            return total;
+        }
+
+        // Manejar envío del formulario
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // Recolectar datos básicos
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const ticketType = document.querySelector('input[name="ticketType"]:checked').value;
+            const isPresale = document.querySelector('input[name="presale"]:checked').value === 'yes';
+            const qty = ticketQtyEl.value;
+            const wantKoreanName = document.querySelector('input[name="wantKoreanName"]:checked').value === 'yes';
+            const total = calculateTotal();
+
+            // Número de WhatsApp
+            const whatsappNumber = "593987791807"; // 0987791807 formato internacional EC
+
+            // Construir mensaje
+            let message = `*¡Hola Korea Town!* 🎤✨\nAquí están mis datos para confirmar mi reserva al *K-Pop Fan Party*.\n\n`;
+            
+            message += `👤 *Nombre de contacto:* ${firstName} ${lastName}\n`;
+            message += `📧 *Correo:* ${email}\n\n`;
+            
+            message += `🎫 *TICKET SELECCIONADO*\n`;
+            message += `▪️ *Localidad:* ${ticketType === 'VIP' ? '👑 VIP' : '🎟️ GENERAL'}\n`;
+            message += `▪️ *Cantidad:* ${qty} Entrada(s)\n`;
+            message += `▪️ *Tarifa:* ${isPresale ? 'PREVENTA (Aplica descuento)' : 'REGULAR'}\n\n`;
+            
+            // Info de nombres en Coreano (Dinámico)
+            if (wantKoreanName) {
+                const nameInputs = document.querySelectorAll('input[name="koreanNameInput[]"]');
+                message += `🇰🇷 *NOMBRES PARA PASAPORTE (EN COREANO)* 🫰\n`;
+                nameInputs.forEach((input, index) => {
+                    message += `▪️ *Entrada ${index + 1}:* ${input.value}\n`;
+                });
+                message += `\n`;
+            } else {
+                message += `🇰🇷 *Nombres en coreano:* No solicitados (usar normales)\n\n`;
+            }
+
+            // Solo agregar info de lunch si es VIP (multiples selecciones)
+            if (ticketType === 'VIP') {
+                const lunchSelects = document.querySelectorAll('select[name="lunchOption[]"]');
+                
+                message += `🍱 *MIS LUNCHS (VIP)*\n`;
+                lunchSelects.forEach((select, index) => {
+                    message += `▪️ *Entrada ${index + 1}:* ${select.value}\n`;
+                });
+                message += `\n`;
+            }
+
+            message += `💰 *TOTAL A TRANSFERIR:* $${total.toFixed(2)}\n\n`;
+            message += `📎 *¡Adjunto la captura de mi comprobante de pago del Banco Pichincha!* ✅`;
+
+            // Enviar a WhatsApp
+            const encodedMessage = encodeURIComponent(message);
+            const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
+            
+            window.open(whatsappUrl, '_blank');
+        });
+
+        // Inicializar vista al cargar
+        updateTicketView();
+        toggleKoreanNames();
+    </script>
+</body>
+</html>
